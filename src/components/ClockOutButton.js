@@ -3,7 +3,7 @@ import React from 'react';
 import { useDispatch } from 'react-redux';
 import { clockOut } from '../redux/actions';
 
-function ClockOutButton() {
+export const ClockOutButton = () => {
   const dispatch = useDispatch();
 
   const handleClockOut = () => {
@@ -14,4 +14,3 @@ function ClockOutButton() {
   return <button onClick={handleClockOut}>Clock Out</button>;
 }
 
-export default ClockOutButton;

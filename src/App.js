@@ -1,7 +1,9 @@
 // App.js
 import React from 'react';
 import { useSelector } from 'react-redux';
-import { ClockInButton, ClockOutButton, UserList } from './components';
+import { ClockInButton} from './components/ClockInButton';
+import {ClockOutButton} from './components/ClockOutButton'; 
+import {UserList} from './components/UserList' 
 import { auth } from './firebase/firebase';
 
 function App() {

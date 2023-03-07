@@ -2,7 +2,7 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 
-function UserList() {
+export const UserList = () => {
   const { users } = useSelector((state) => state.users);
 
   return (
@@ -16,4 +16,3 @@ function UserList() {
   );
 }
 
-export default UserList;
