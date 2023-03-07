@@ -1,23 +1,27 @@
 import React from 'react';
-import { createRoot } from 'react-dom/client';
+import ReactDOM from 'react-dom';
 import { Provider } from 'react-redux';
-import { store } from './app/store';
+import { configureStore } from '@reduxjs/toolkit';
+import thunk from 'redux-thunk';
 import App from './App';
-import reportWebVitals from './reportWebVitals';
-import './index.css';
+import rootReducer from './redux/reducers';
+import { auth, addUser, setUsers } from './firebase/firebase';
 
-const container = document.getElementById('root');
-const root = createRoot(container);
+const store = configureStore({
+  reducer: rootReducer,
+  middleware: [thunk],
+});
 
-root.render(
-  <React.StrictMode>
-    <Provider store={store}>
-      <App />
-    </Provider>
-  </React.StrictMode>
+auth.onAuthStateChanged((user) => {
+  if (user) {
+    store.dispatch(addUser(user));
+    store.dispatch(setUsers());
+  }
+});
+
+ReactDOM.render(
+  <Provider store={store}>
+    <App />
+  </Provider>,
+  document.getElementById('root')
 );
-
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-reportWebVitals();
