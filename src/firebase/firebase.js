@@ -1,21 +1,21 @@
-import { initializeApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
 
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  // uw Firebase configuratie gegevens hier
-  apiKey: "AIzaSyAfS-I1miPzZZA5Mc9Knj6oKIQw_C-dsUk",
-  authDomain: "clockinout-wolk9.firebaseapp.com",
-  projectId: "clockinout-wolk9",
-  storageBucket: "clockinout-wolk9.appspot.com",
-  messagingSenderId: "795930777692",
-  appId: "1:795930777692:web:418b79366fdb7ab9772e99",
-  measurementId: "G-F7DN5X0377"
+  apiKey: "AIzaSyCH6hD6EOpzgGjzHIoWGMVYApht4XDQCFg",
+  authDomain: "cico-4d5b8.firebaseapp.com",
+  projectId: "cico-4d5b8",
+  storageBucket: "cico-4d5b8.appspot.com",
+  messagingSenderId: "27761515023",
+  appId: "1:27761515023:web:dac6e1b652bf96d2d6e17a",
+  measurementId: "G-8DH19ZEBCV"
 };
 
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
-
-const db = getFirestore(app);
-const auth = getAuth(app);
-
-export { db, auth };
+const analytics = getAnalytics(app);
