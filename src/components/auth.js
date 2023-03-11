@@ -11,10 +11,10 @@ import {
 } from "firebase/auth";
 import { useState } from "react";
 
-export const Auth = (props) => {
-  const { showSignUp, setShowSignUp } = props;
+export const Auth = () => {
+  const [showSignUp, setShowSignUp] = useState(false);
 
-  console.log(showSignUp);
+  console.log("Auth, showSignUp:", showSignUp);
 
   console.log(auth?.currentUser?.email);
 
@@ -34,7 +34,10 @@ const SignInDialog = (props) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  console.log("SignInDialog");
+
   const signInUser = async () => {
+    console.log("signInUser");
     try {
       const user = await signInWithEmailAndPassword(auth, email, password);
       console.log(user);
@@ -44,16 +47,9 @@ const SignInDialog = (props) => {
   };
 
   const signInWithGoogle = async () => {
+    console.log("signInWithGoogle");
     try {
       await signInWithPopup(auth, googleProvider);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const signOutUser = async () => {
-    try {
-      await signOut(auth);
     } catch (err) {
       console.error(err);
     }
@@ -96,7 +92,10 @@ const SignUpDialog = (props) => {
   const [registerEmail, setRegisterEmail] = useState("");
   const [registerPassword, setRegisterPassword] = useState("");
 
+  console.log("SignUpDialog");
+
   const registerUser = async () => {
+    console.log("registerUser");
     try {
       const user = await createUserWithEmailAndPassword(
         auth,
