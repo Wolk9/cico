@@ -59,8 +59,8 @@ const SignInDialog = (props) => {
   return (
     <>
       <div className="p-inputgroup">
-        Sign In
         <span className="p-inputgroup-addon">
+          <p className="">Sign In</p>
           <i className="pi pi-user"></i>
           <InputText
             placeholder="Email..."
@@ -112,8 +112,8 @@ const SignUpDialog = (props) => {
   return (
     <>
       <div className="p-inputgroup">
-        Sign Up
         <span className="p-inputgroup-addon">
+          <p>Sign Up</p>
           <i className="pi pi-user"></i>
           <InputText
             placeholder="Register Email..."

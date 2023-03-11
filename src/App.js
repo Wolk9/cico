@@ -17,7 +17,9 @@ import {
 } from "react-router-dom";
 import { Cico } from "./pages/cico";
 import { User } from "./pages/user";
-
+import Grid2 from "@mui/material/Unstable_Grid2/Grid2";
+import { Box, Grid, Paper } from "@mui/material";
+import { styled } from "@mui/material/styles";
 const App = () => {
   const [popUpVisible, setPopUpVisible] = useState(false);
 
@@ -63,7 +65,12 @@ const App = () => {
     <div>
       <RouterProvider router={router} />
 
-      <Dialog header="Welcome" style={{ width: "60vw" }} visible={popUpVisible}>
+      <Dialog
+        header="Welcome"
+        style={{ width: "auto" }}
+        visible={popUpVisible}
+        closable={false}
+      >
         <Auth />
       </Dialog>
     </div>
@@ -72,24 +79,48 @@ const App = () => {
 
 const Root = (props) => {
   const { user, signOutUser } = props;
+
   return (
     <div>
-      <div>
-        <Link to="/user">User</Link>
-        <Link to="/">Home</Link>
-      </div>
-      <h4>User logged In:</h4>
-      {user?.email}
-      {user?.email !== undefined ? (
-        <Button
-          label="Sign out"
-          onClick={() => {
-            signOutUser();
-          }}
-        />
-      ) : (
-        <></>
-      )}
+      <Box sx={{ backgroundColor: "#6688ff", color: "#eeeeee" }}>
+        <Grid
+          container
+          direction="row"
+          justifyContent="flex-start"
+          alignItems="center"
+        >
+          <Grid item md={2} padding={2}>
+            <Link to="/user">User</Link>
+          </Grid>
+          <Grid item md={2} padding={4}>
+            <Link to="/">Home</Link>
+          </Grid>
+          <Grid item md={8} padding={1}>
+            <Grid
+              container
+              direction="row"
+              justifyContent="flex-end"
+              alignItems="center"
+            >
+              <Grid item xs={6} padding={2}>
+                <p>{user?.email}</p>
+              </Grid>
+              <Grid item xs={6} padding={2}>
+                {user?.email !== undefined ? (
+                  <Button
+                    label="Sign out"
+                    onClick={() => {
+                      signOutUser();
+                    }}
+                  />
+                ) : (
+                  <></>
+                )}{" "}
+              </Grid>
+            </Grid>
+          </Grid>
+        </Grid>
+      </Box>
       <div>
         <Outlet />
       </div>
