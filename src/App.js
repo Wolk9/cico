@@ -6,7 +6,7 @@ import { auth } from "./config/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 
 const App = () => {
-  //  const [popUpVisible, setPopUpVisible] = useState(false);
+  const [popUpVisible, setPopUpVisible] = useState(false);
   const [showSignUp, setShowSignUp] = useState(false);
   const [user, setUser] = useState("");
 
@@ -14,10 +14,14 @@ const App = () => {
     setUser(currentUser);
   });
 
+  console.log(user);
+  console.log(showSignUp);
+  console.log(popUpVisible);
+
   if (user) {
-    setShowSignUp(false);
+    setPopUpVisible(false);
   } else {
-    setShowSignUp(true);
+    setPopUpVisible(true);
   }
 
   return (
@@ -26,7 +30,7 @@ const App = () => {
       {user?.email}
       <Dialog
         header={showSignUp ? "Sign Up" : "Sign In"}
-        visible={showSignUp}
+        visible={popUpVisible}
         style={{ width: "60vw" }}
       >
         <Auth showSignUp={showSignUp} setShowSignUp={setShowSignUp} />
