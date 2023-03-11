@@ -2,6 +2,7 @@
 import { InputText } from 'primereact/inputtext';
 import { Button } from 'primereact/button';
 import { Card } from "primereact/card";
+import { Password } from "primereact/password";
 import { auth, googleProvider } from "../config/firebase";
 import {
   createUserWithEmailAndPassword,
@@ -68,7 +69,7 @@ const SignInDialog = (props) => {
         </span>
         <span className="p-inputgroup-addon">
           <i className="pi pi-question"></i>
-          <InputText
+          <Password
             type="password"
             placeholder="Password..."
             onChange={(e) => setPassword(e.target.value)}
@@ -91,7 +92,7 @@ const SignUpDialog = (props) => {
   const { setShowSignUp } = props;
   const [registerEmail, setRegisterEmail] = useState("");
   const [registerPassword, setRegisterPassword] = useState("");
-
+  const [value, setValue] = useState("");
   console.log("SignUpDialog");
 
   const registerUser = async () => {
@@ -121,10 +122,13 @@ const SignUpDialog = (props) => {
         </span>
         <span className="p-inputgroup-addon">
           <i className="pi pi-question"></i>
-          <InputText
+          <Password
             type="password"
+            value={value}
             placeholder="Register Password..."
-            onChange={(e) => setRegisterPassword(e.target.value)}
+            onChange={(e) => (
+              setRegisterPassword(e.target.value), setValue(e.target.value)
+            )}
           />
         </span>
         <Button label="SignUp" onClick={registerUser} />
