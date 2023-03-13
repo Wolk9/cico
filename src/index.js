@@ -9,7 +9,11 @@ import "primereact/resources/themes/lara-light-indigo/theme.css";
 import "primereact/resources/primereact.min.css";
 
 //icons
-import "primeicons/primeicons.css";                                         
+import "primeicons/primeicons.css";
+
+//primeflex
+import "/node_modules/primeflex/primeflex.css";    
+
         
 import "@fontsource/roboto/300.css";
 import "@fontsource/roboto/400.css";

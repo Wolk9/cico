@@ -17,9 +17,7 @@ import {
 } from "react-router-dom";
 import { Cico } from "./pages/cico";
 import { User } from "./pages/user";
-import Grid2 from "@mui/material/Unstable_Grid2/Grid2";
-import { Box, Grid, Paper } from "@mui/material";
-import { styled } from "@mui/material/styles";
+
 const App = () => {
   const [popUpVisible, setPopUpVisible] = useState(false);
 
@@ -45,8 +43,8 @@ const App = () => {
   const router = createBrowserRouter(
     createRoutesFromElements(
       <Route path="/" element={<Root user={user} signOutUser={signOutUser} />}>
-        <Route index element={<Cico />} />
-        <Route path="/user" element={<User />} />
+        <Route index element={<Cico user={user} />} />
+        <Route path="/user" element={<User user={user} />} />
       </Route>
     )
   );
@@ -67,7 +65,7 @@ const App = () => {
 
       <Dialog
         header="Welcome"
-        style={{ width: "auto" }}
+        style={{ width: "auto", margin: 25 }}
         visible={popUpVisible}
         closable={false}
       >
@@ -81,31 +79,28 @@ const Root = (props) => {
   const { user, signOutUser } = props;
 
   return (
-    <div>
-      <Box sx={{ backgroundColor: "#6688ff", color: "#eeeeee" }}>
-        <Grid
-          container
-          direction="row"
-          justifyContent="flex-start"
-          alignItems="center"
-        >
-          <Grid item md={2} padding={2}>
-            <Link to="/user">User</Link>
-          </Grid>
-          <Grid item md={2} padding={4}>
-            <Link to="/">Home</Link>
-          </Grid>
-          <Grid item md={8} padding={1}>
-            <Grid
-              container
-              direction="row"
-              justifyContent="flex-end"
-              alignItems="center"
+    <div className="card">
+      <div className="card-container blue-container overflow-hidden">
+        <div className="flex bg-blue-500 justify-content-end">
+          <div className="flex-initial flex align-items-center justify-content-center font-bold text-white ml-2 mr-5 px-1 pl-1 pr-5 border-round">
+            <Link className="no-underline text-white text-base p-link" to="/">
+              Home
+            </Link>
+          </div>
+          <div className="flex-initial flex align-items-center justify-content-center font-bold text-white m-2 px-1 py-1 border-round">
+            <Link
+              className="no-underline text-white text-base p-link"
+              to="/user"
             >
-              <Grid item xs={6} padding={2}>
-                <p>{user?.email}</p>
-              </Grid>
-              <Grid item xs={6} padding={2}>
+              User
+            </Link>
+          </div>
+          <div className="flex-initial flex align-items-end justify-content-end font-bold text-white m-2 px-1 py-1 border-round">
+            <div className="card-container">
+              <div className="flex-initial flex align-items-center justify-content-end font-bold text-white m-2 px-1 py-1 border-round">
+                <p className="p-link">{user?.email}</p>
+              </div>
+              <div className="flex-initial flex align-items-center justify-content-end font-bold text-white m-2 px-1 py-1 border-round">
                 {user?.email !== undefined ? (
                   <Button
                     label="Sign out"
@@ -116,11 +111,11 @@ const Root = (props) => {
                 ) : (
                   <></>
                 )}{" "}
-              </Grid>
-            </Grid>
-          </Grid>
-        </Grid>
-      </Box>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
       <div>
         <Outlet />
       </div>

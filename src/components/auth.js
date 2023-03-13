@@ -58,15 +58,16 @@ const SignInDialog = (props) => {
 
   return (
     <>
-      <div className="p-inputgroup">
+      <div className="p-inputgroup flex align-items-center justify-content-center bg-grey-500 font-bold text-white m-2 px-1 py-1 border-round">
         <span className="p-inputgroup-addon">
-          <p className="">Sign In</p>
           <i className="pi pi-user"></i>
           <InputText
             placeholder="Email..."
             onChange={(e) => setEmail(e.target.value)}
           />
         </span>
+      </div>
+      <div className="p-inputgroup flex align-items-center justify-content-center bg-grey-500 font-bold text-white m-2 px-1 py-1 border-round">
         <span className="p-inputgroup-addon">
           <i className="pi pi-question"></i>
           <Password
@@ -75,9 +76,11 @@ const SignInDialog = (props) => {
             onChange={(e) => setPassword(e.target.value)}
           />
         </span>
+      </div>
+      <div className="flex align-items-center justify-content-center font-bold text-white m-2 px-1 py-1 border-round">
         <Button label="SignIn" onClick={signInUser} />
       </div>
-      <div>
+      <div className="flex align-items-center justify-content-center font-bold text-white m-2 px-1 py-1 border-round">
         <Button
           label="not a user yet?"
           onClick={() => setShowSignUp(true)}
@@ -92,7 +95,7 @@ const SignUpDialog = (props) => {
   const { setShowSignUp } = props;
   const [registerEmail, setRegisterEmail] = useState("");
   const [registerPassword, setRegisterPassword] = useState("");
-  const [value, setValue] = useState("");
+  const [registerValue, setRegisterValue] = useState("");
   console.log("SignUpDialog");
 
   const registerUser = async () => {
@@ -111,29 +114,33 @@ const SignUpDialog = (props) => {
 
   return (
     <>
-      <div className="p-inputgroup">
+      <div className="p-inputgroup flex align-items-center justify-content-center bg-grey-500 font-bold text-white m-2 px-1 py-1 border-round">
         <span className="p-inputgroup-addon">
-          <p>Sign Up</p>
           <i className="pi pi-user"></i>
           <InputText
             placeholder="Register Email..."
             onChange={(e) => setRegisterEmail(e.target.value)}
           />
         </span>
-        <span className="p-inputgroup-addon">
+      </div>
+      <div className="p-inputgroup flex align-items-center justify-content-center bg-grey-500 font-bold text-white m-2 px-1 py-1 border-round">
+        <span className="p-inputgroup-addon ">
           <i className="pi pi-question"></i>
           <Password
             type="password"
-            value={value}
+            value={registerValue}
             placeholder="Register Password..."
             onChange={(e) => (
-              setRegisterPassword(e.target.value), setValue(e.target.value)
+              setRegisterPassword(e.target.value),
+              setRegisterValue(e.target.value)
             )}
           />
         </span>
+      </div>
+      <div className="p-inputgroup flex align-items-center justify-content-center bg-grey-500 font-bold text-white m-2 px-1 py-1 border-round">
         <Button label="SignUp" onClick={registerUser} />
       </div>
-      <div>
+      <div className="p-inputgroup flex align-items-center justify-content-center bg-grey-500 font-bold text-white m-2 px-1 py-1 border-round">
         <div>
           <Button
             label="already an user?"
