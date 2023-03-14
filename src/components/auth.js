@@ -5,15 +5,18 @@ import { Card } from "primereact/card";
 import { Password } from "primereact/password";
 import { InputNumber } from "primereact/inputnumber";
 import { Calendar } from "primereact/calendar";
+import { Dialog } from "primereact/dialog";
 import { auth, googleProvider, db } from "../config/firebase";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
+  onAuthStateChanged,
+  getAuth,
 } from "firebase/auth";
 import { addDoc, collection } from "firebase/firestore";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { async } from "@firebase/util";
 import { Input } from "@mui/material";
 
@@ -98,6 +101,8 @@ const SignInDialog = (props) => {
 
 const SignUpDialog = (props) => {
   const { setShowSignUp } = props;
+  // const [visible, setVisible] = useState(false);
+  // const [error, setError] = useState([]);
   const [registerEmail, setRegisterEmail] = useState("");
   const [registerPassword, setRegisterPassword] = useState("");
   const [registerValue, setRegisterValue] = useState("");
@@ -105,6 +110,7 @@ const SignUpDialog = (props) => {
   const [registerLastName, setRegisterLastName] = useState("");
   const [registerAge, setRegisterAge] = useState(0);
   const [registerContractDate, setRegisterContractDate] = useState("");
+  const [registerUid, setRegisterUid] = useState([]);
   console.log("SignUpDialog");
 
   const usersRef = collection(db, "users");
@@ -116,28 +122,34 @@ const SignUpDialog = (props) => {
         auth,
         registerEmail,
         registerPassword
-      );
-      console.log(user);
-
-      createUser(user.uid);
+      ).then((userCredential) => {
+        // Signed in
+        const user = userCredential.user;
+        console.log(user, user.uid);
+        setRegisterUid([...registerUid, user.uid]);
+        return user;
+      });
+      createUser();
     } catch (err) {
       console.error(err);
     }
   };
 
-  //TODO: maakt van authID een number. Moet een array zijn.
+  useEffect(() => {}, []);
 
-  const createUser = async (authUID) => {
+  const createUser = async () => {
+    console.log(registerUid);
+    let newUser = {
+      firstName: registerFirstName || null,
+      lastName: registerLastName || null,
+      age: registerAge || null,
+      contractDate: registerContractDate || null,
+      authIDs: registerUid || null,
+    };
+    console.log(newUser);
     try {
-      let authIDs = [];
-      await addDoc(usersRef, {
-        firstName: registerFirstName,
-        lastName: registerLastName,
-        age: registerAge,
-        contractDate: registerContractDate,
-        authIDs: authIDs.push(authUID),
-      });
-      console.log("createUser");
+      await addDoc(usersRef, newUser);
+      console.log("createUser:", newUser);
     } catch (err) {
       console.error(err);
     }

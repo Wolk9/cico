@@ -75,7 +75,7 @@ export const User = (props) => {
     }
 
     setCurrentUser(result);
-  }, [user]);
+  }, [userList, user.uid]);
 
   console.log("new user?", newUser);
   console.log(currentUser);
