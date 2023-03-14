@@ -3,14 +3,19 @@ import { InputText } from 'primereact/inputtext';
 import { Button } from 'primereact/button';
 import { Card } from "primereact/card";
 import { Password } from "primereact/password";
-import { auth, googleProvider } from "../config/firebase";
+import { InputNumber } from "primereact/inputnumber";
+import { Calendar } from "primereact/calendar";
+import { auth, googleProvider, db } from "../config/firebase";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
 } from "firebase/auth";
+import { addDoc, collection } from "firebase/firestore";
 import { useState } from "react";
+import { async } from "@firebase/util";
+import { Input } from "@mui/material";
 
 export const Auth = () => {
   const [showSignUp, setShowSignUp] = useState(false);
@@ -96,7 +101,13 @@ const SignUpDialog = (props) => {
   const [registerEmail, setRegisterEmail] = useState("");
   const [registerPassword, setRegisterPassword] = useState("");
   const [registerValue, setRegisterValue] = useState("");
+  const [registerFirstName, setRegisterFirstName] = useState("");
+  const [registerLastName, setRegisterLastName] = useState("");
+  const [registerAge, setRegisterAge] = useState(0);
+  const [registerContractDate, setRegisterContractDate] = useState("");
   console.log("SignUpDialog");
+
+  const usersRef = collection(db, "users");
 
   const registerUser = async () => {
     console.log("registerUser");
@@ -107,6 +118,26 @@ const SignUpDialog = (props) => {
         registerPassword
       );
       console.log(user);
+
+      createUser(user.uid);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  //TODO: maakt van authID een number. Moet een array zijn.
+
+  const createUser = async (authUID) => {
+    try {
+      let authIDs = [];
+      await addDoc(usersRef, {
+        firstName: registerFirstName,
+        lastName: registerLastName,
+        age: registerAge,
+        contractDate: registerContractDate,
+        authIDs: authIDs.push(authUID),
+      });
+      console.log("createUser");
     } catch (err) {
       console.error(err);
     }
@@ -134,6 +165,45 @@ const SignUpDialog = (props) => {
               setRegisterPassword(e.target.value),
               setRegisterValue(e.target.value)
             )}
+          />
+        </span>
+      </div>
+      <div className="p-inputgroup flex align-items-center justify-content-center bg-grey-500 font-bold text-white m-2 px-1 py-1 border-round">
+        <span className="p-inputgroup-addon">
+          <i className="pi"></i>
+          <InputText
+            placeholder="First Name..."
+            onChange={(e) => setRegisterFirstName(e.target.value)}
+          />
+        </span>
+      </div>
+      <div className="p-inputgroup flex align-items-center justify-content-center bg-grey-500 font-bold text-white m-2 px-1 py-1 border-round">
+        <span className="p-inputgroup-addon">
+          <i className="pi"></i>
+          <InputText
+            placeholder="Last Name..."
+            onChange={(e) => setRegisterLastName(e.target.value)}
+          />
+        </span>
+      </div>
+      <div className="p-inputgroup flex align-items-center justify-content-center bg-grey-500 font-bold text-white m-2 px-1 py-1 border-round">
+        <span className="p-inputgroup-addon">
+          <i className="pi"></i>
+          <InputNumber
+            value={registerAge}
+            placeholder="Age..."
+            onChange={(e) => setRegisterAge(e.value)}
+          />
+        </span>
+      </div>
+      <div className="p-inputgroup flex align-items-center justify-content-center bg-grey-500 font-bold text-white m-2 px-1 py-1 border-round">
+        <span className="p-inputgroup-addon">
+          <i className="pi"></i>
+          <Calendar
+            value={registerContractDate}
+            placeholder="Contractdate..."
+            onChange={(e) => setRegisterContractDate(e.value)}
+            dateFormat="dd/mm/yy"
           />
         </span>
       </div>
