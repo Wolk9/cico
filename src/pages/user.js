@@ -22,6 +22,7 @@ export const User = (props) => {
   const [lastNameValue, setLastNameValue] = useState("");
   const [emailValue, setEmailValue] = useState("");
   const [ageValue, setAgeValue] = useState(0);
+  const [newUser, setNewUser] = useState(false);
 
   const usersRef = collection(db, "users");
 
@@ -67,24 +68,16 @@ export const User = (props) => {
     });
     console.log(result);
 
-    setCurrentUser(result);
-    setFirstNameValue(result?.firstName);
-    setLastNameValue(result?.lastName);
-    setEmailValue(user.email);
-  }, [userList]);
+    if (result === undefined) {
+      setNewUser(true);
+    } else {
+      setNewUser(false);
+    }
 
-  if (firstNameValue === undefined) {
-    setFirstNameValue("new");
-    setLastNameValue("user");
-  }
-  if (currentUser === undefined) {
-    setCurrentUser({
-      firstName: firstNameValue,
-      lastName: lastNameValue,
-      age: ageValue,
-      email: emailValue,
-    });
-  }
+    setCurrentUser(result);
+  }, [user]);
+
+  console.log("new user?", newUser);
   console.log(currentUser);
 
   return (
