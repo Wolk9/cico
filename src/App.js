@@ -17,6 +17,7 @@ import {
 } from "react-router-dom";
 import { Cico } from "./pages/cico";
 import { User } from "./pages/user";
+import { Admin } from "./pages/admin";
 
 const App = () => {
   const [popUpVisible, setPopUpVisible] = useState(false);
@@ -45,6 +46,7 @@ const App = () => {
       <Route path="/" element={<Root user={user} signOutUser={signOutUser} />}>
         <Route index element={<Cico user={user} />} />
         <Route path="/user" element={<User user={user} />} />
+        <Route path="/admin" element={<Admin user={user} />} />
       </Route>
     )
   );

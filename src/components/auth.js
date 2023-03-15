@@ -109,8 +109,10 @@ const SignUpDialog = (props) => {
   const [registerFirstName, setRegisterFirstName] = useState("");
   const [registerLastName, setRegisterLastName] = useState("");
   const [registerAge, setRegisterAge] = useState(0);
+  const [registerHoursPerWeek, setRegisterHoursPerWeek] = useState(24);
   const [registerContractDate, setRegisterContractDate] = useState("");
-  const [registerUid, setRegisterUid] = useState([]);
+  const [registerAdmin, setRegisterAdmin] = useState(false);
+  const registerUid = [];
   console.log("SignUpDialog");
 
   const usersRef = collection(db, "users");
@@ -126,7 +128,8 @@ const SignUpDialog = (props) => {
         // Signed in
         const user = userCredential.user;
         console.log(user, user.uid);
-        setRegisterUid([...registerUid, user.uid]);
+        registerUid.push(user.uid);
+        console.log(registerUid);
         return user;
       });
       createUser();
@@ -144,7 +147,9 @@ const SignUpDialog = (props) => {
       lastName: registerLastName || null,
       age: registerAge || null,
       contractDate: registerContractDate || null,
+      hoursPerWeek: registerHoursPerWeek || null,
       authIDs: registerUid || null,
+      admin: registerAdmin || null,
     };
     console.log(newUser);
     try {
@@ -205,6 +210,16 @@ const SignUpDialog = (props) => {
             value={registerAge}
             placeholder="Age..."
             onChange={(e) => setRegisterAge(e.value)}
+          />
+        </span>
+      </div>
+      <div className="p-inputgroup flex align-items-center justify-content-center bg-grey-500 font-bold text-white m-2 px-1 py-1 border-round">
+        <span className="p-inputgroup-addon">
+          <i className="pi"></i>
+          <InputNumber
+            value={registerHoursPerWeek}
+            placeholder="Age..."
+            onChange={(e) => setRegisterHoursPerWeek(e.value)}
           />
         </span>
       </div>
