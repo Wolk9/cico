@@ -218,7 +218,7 @@ const SignUpDialog = (props) => {
           <i className="pi"></i>
           <InputNumber
             value={registerHoursPerWeek}
-            placeholder="Age..."
+            placeholder="Hours/Week"
             onChange={(e) => setRegisterHoursPerWeek(e.value)}
           />
         </span>

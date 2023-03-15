@@ -14,12 +14,16 @@ import {
   Outlet,
   Route,
   RouterProvider,
+  Routes,
+  useNavigate,
 } from "react-router-dom";
 import { Cico } from "./pages/cico";
 import { User } from "./pages/user";
 import { Admin } from "./pages/admin";
 
 const App = () => {
+  console.log("App");
+  const navigate = useNavigate();
   const [popUpVisible, setPopUpVisible] = useState(false);
 
   const [user, setUser] = useState("");
@@ -36,20 +40,11 @@ const App = () => {
     console.log("signOutUser");
     try {
       await signOut(auth);
+      navigate("/");
     } catch (err) {
       console.error(err);
     }
   };
-
-  const router = createBrowserRouter(
-    createRoutesFromElements(
-      <Route path="/" element={<Root user={user} signOutUser={signOutUser} />}>
-        <Route index element={<Cico user={user} />} />
-        <Route path="/user" element={<User user={user} />} />
-        <Route path="/admin" element={<Admin user={user} />} />
-      </Route>
-    )
-  );
 
   useEffect(() => {
     if (user?.email !== undefined) {
@@ -63,8 +58,6 @@ const App = () => {
 
   return (
     <div>
-      <RouterProvider router={router} />
-
       <Dialog
         header="Welcome"
         style={{ width: "auto", margin: 25 }}
@@ -73,11 +66,19 @@ const App = () => {
       >
         <Auth />
       </Dialog>
+      <Navigation user={user} signOutUser={signOutUser} />
+      <Routes>
+        <Route exact path="/" element={<Cico user={user} />} />
+        <Route exact path="/user" element={<User user={user} />} />
+        <Route exact path="/admin" element={<Admin user={user} />} />
+      </Routes>
     </div>
   );
 };
 
-const Root = (props) => {
+const Navigation = (props) => {
+  console.log("navigation");
+  const navigate = useNavigate();
   const { user, signOutUser } = props;
 
   return (
@@ -112,14 +113,14 @@ const Root = (props) => {
                   />
                 ) : (
                   <></>
-                )}{" "}
+                )}
               </div>
+              <Button link onClick={() => navigate(-1)}>
+                go back
+              </Button>
             </div>
           </div>
         </div>
-      </div>
-      <div>
-        <Outlet />
       </div>
     </div>
   );
