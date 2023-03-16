@@ -30,9 +30,13 @@ export const Auth = () => {
   return (
     <div>
       {!showSignUp ? (
-        <SignInDialog setShowSignUp={setShowSignUp} />
+        <Card title="Sign In" subTitle="You've been here before">
+          <SignInDialog setShowSignUp={setShowSignUp} />
+        </Card>
       ) : (
-        <SignUpDialog setShowSignUp={setShowSignUp} />
+        <Card title="Sign Up" subTitle="You've never been here before">
+          <SignUpDialog setShowSignUp={setShowSignUp} />
+        </Card>
       )}
     </div>
   );
@@ -55,14 +59,14 @@ const SignInDialog = (props) => {
     }
   };
 
-  const signInWithGoogle = async () => {
-    console.log("signInWithGoogle");
-    try {
-      await signInWithPopup(auth, googleProvider);
-    } catch (err) {
-      console.error(err);
-    }
-  };
+  // const signInWithGoogle = async () => {
+  //   console.log("signInWithGoogle");
+  //   try {
+  //     await signInWithPopup(auth, googleProvider);
+  //   } catch (err) {
+  //     console.error(err);
+  //   }
+  // };
 
   return (
     <>
