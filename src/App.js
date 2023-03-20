@@ -8,8 +8,10 @@ import {
   Link,
   Navigate,
 } from "react-router-dom";
+import { setRole } from "./components/helpers";
 import Navigation from "./components/Navigation";
-import { auth } from "./config/firebase";
+import { auth, db } from "./config/firebase";
+import { collection, doc, getDoc } from "firebase/firestore";
 import { Admin } from "./pages/admin";
 import { Cico } from "./pages/cico";
 import { User } from "./pages/user";
@@ -42,7 +44,7 @@ const AuthenticatedRoute = ({ children, user, requiredRole, ...rest }) => {
 };
 
 const App = () => {
-  const [user, setUser] = useState("");
+  const [user, setUser] = useState({});
   const [popUpVisible, setPopUpVisible] = useState(false);
 
   useEffect(() => {
@@ -50,13 +52,41 @@ const App = () => {
       if (currentUser) {
         setUser(currentUser);
         setPopUpVisible(false);
+        checkUserRole(currentUser.uid);
       } else {
-        setUser("");
+        setUser({});
         setPopUpVisible(true);
       }
     });
     return unsubscribe;
   }, []);
+
+  const checkUserRole = async (uid) => {
+    const usersRef = collection(db, "users");
+
+    const userDoc = await getDoc(doc(usersRef, uid));
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+      if (userData.role === "admin") {
+        console.log("User has admin role");
+        setUser({ ...user, role: "admin" });
+      } else {
+        console.log("User does not have admin role");
+        setUser({ ...user, role: "user" });
+      }
+    } else {
+      console.log("User not found");
+    }
+  };
+
+  if (user.role === undefined) {
+    console.log("user.role = undefined");
+    if (user.email === "martin.de.bes@me.com") {
+      console.log("user is mdb");
+
+      setRole("QEM0Mse1LrZKCcZkaSWHJRm1OzL2", "admin");
+    }
+  }
 
   console.log(user.email, user.role);
 

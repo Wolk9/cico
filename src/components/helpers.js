@@ -1,5 +1,7 @@
 import React from "react";
 import moment from "moment";
+import { db } from "../config/firebase";
+import { collection, doc, setDoc } from "firebase/firestore";
 
 export const date = (unixTime) => {
   console.log(unixTime);
@@ -21,4 +23,18 @@ export const time = (unixTime) => {
 
   console.log(formatedTime);
   return formatedTime;
+};
+
+export const setRole = (uid2makeAdmin, role) => {
+  console.log("makeAdmin");
+
+  const usersRef = collection(db, "users");
+
+  setDoc(doc(usersRef, uid2makeAdmin), { role })
+    .then(() => {
+      console.log("User role added to Firestore successfully");
+    })
+    .catch((error) => {
+      console.error("Error adding user role to Firestore:", error);
+    });
 };
