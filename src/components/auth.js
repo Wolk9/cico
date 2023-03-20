@@ -30,11 +30,11 @@ export const Auth = () => {
   return (
     <div>
       {!showSignUp ? (
-        <Card title="Sign In" subTitle="You've been here before">
+        <Card title="Sign In" subTitle="If you've been here before">
           <SignInDialog setShowSignUp={setShowSignUp} />
         </Card>
       ) : (
-        <Card title="Sign Up" subTitle="You've never been here before">
+        <Card title="Sign Up" subTitle="If you've never been here before">
           <SignUpDialog setShowSignUp={setShowSignUp} />
         </Card>
       )}

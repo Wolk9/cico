@@ -19,8 +19,13 @@ const AuthenticatedRoute = ({ children, user, requiredRole, ...rest }) => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setIsAuthenticated(!!currentUser);
+      if (currentUser) {
+        setIsAuthenticated(true);
+      } else {
+        setIsAuthenticated(false);
+      }
     });
+
     return unsubscribe;
   }, []);
 
@@ -75,7 +80,7 @@ const App = () => {
             }
           />
         </Routes>
-        {!user && <Navigate to="/" />}
+        {/* {!user && <Navigate to="/" />} */}
       </div>
     </Router>
   );
