@@ -1,7 +1,7 @@
 import React from "react";
 import moment from "moment";
 import { db } from "../config/firebase";
-import { collection, doc, setDoc } from "firebase/firestore";
+import { collection, doc, setDoc, getDoc } from "firebase/firestore";
 
 export const date = (unixTime) => {
   console.log(unixTime);
@@ -37,4 +37,20 @@ export const setRole = (uid2makeAdmin, role) => {
     .catch((error) => {
       console.error("Error adding user role to Firestore:", error);
     });
+};
+
+export const checkUserRole = async (uid) => {
+  const usersRef = collection(db, "users");
+
+  const userDoc = await getDoc(doc(usersRef, uid));
+  if (userDoc.exists()) {
+    const userData = userDoc.data();
+    if (userData.role === "admin") {
+      console.log("User has admin role");
+    } else {
+      console.log("User does not have admin role");
+    }
+  } else {
+    console.log("User not found");
+  }
 };

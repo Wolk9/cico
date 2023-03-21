@@ -8,13 +8,13 @@ import {
   Link,
   Navigate,
 } from "react-router-dom";
-import { setRole } from "./components/helpers";
 import Navigation from "./components/Navigation";
 import { auth, db } from "./config/firebase";
 import { collection, doc, getDoc } from "firebase/firestore";
 import { Admin } from "./pages/admin";
 import { Cico } from "./pages/cico";
 import { User } from "./pages/user";
+import { checkUserRole } from "./components/helpers";
 
 const AuthenticatedRoute = ({ children, user, requiredRole, ...rest }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -50,6 +50,7 @@ const App = () => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
+        console.log(currentUser);
         setUser(currentUser);
         setPopUpVisible(false);
         checkUserRole(currentUser.uid);
@@ -61,34 +62,7 @@ const App = () => {
     return unsubscribe;
   }, []);
 
-  const checkUserRole = async (uid) => {
-    const usersRef = collection(db, "users");
-
-    const userDoc = await getDoc(doc(usersRef, uid));
-    if (userDoc.exists()) {
-      const userData = userDoc.data();
-      if (userData.role === "admin") {
-        console.log("User has admin role");
-        setUser({ ...user, role: "admin" });
-      } else {
-        console.log("User does not have admin role");
-        setUser({ ...user, role: "user" });
-      }
-    } else {
-      console.log("User not found");
-    }
-  };
-
-  if (user.role === undefined) {
-    console.log("user.role = undefined");
-    if (user.email === "martin.de.bes@me.com") {
-      console.log("user is mdb");
-
-      setRole("QEM0Mse1LrZKCcZkaSWHJRm1OzL2", "admin");
-    }
-  }
-
-  console.log(user.email, user.role);
+  console.log(user);
 
   return (
     <Router>

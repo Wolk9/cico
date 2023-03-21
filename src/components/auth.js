@@ -6,7 +6,7 @@ import { Password } from "primereact/password";
 import { InputNumber } from "primereact/inputnumber";
 import { Calendar } from "primereact/calendar";
 import { Dialog } from "primereact/dialog";
-import { auth, googleProvider, db } from "../config/firebase";
+import { auth, db } from "../config/firebase";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -15,7 +15,7 @@ import {
   onAuthStateChanged,
   getAuth,
 } from "firebase/auth";
-import { addDoc, collection } from "firebase/firestore";
+import { setDoc, collection, doc } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { async } from "@firebase/util";
 import { Input } from "@mui/material";
@@ -46,8 +46,6 @@ const SignInDialog = (props) => {
   const { setShowSignUp } = props;
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
-  console.log("SignInDialog");
 
   const signInUser = async () => {
     console.log("signInUser");
@@ -115,49 +113,39 @@ const SignUpDialog = (props) => {
   const [registerAge, setRegisterAge] = useState(0);
   const [registerHoursPerWeek, setRegisterHoursPerWeek] = useState(24);
   const [registerContractDate, setRegisterContractDate] = useState("");
-  const [registerAdmin, setRegisterAdmin] = useState(false);
-  const registerUid = [];
-  console.log("SignUpDialog");
+  const [registerRole, setRegisterRole] = useState("user");
 
   const usersRef = collection(db, "users");
 
-  const registerUser = async () => {
+  const registerUser = () => {
     console.log("registerUser");
-    try {
-      const user = await createUserWithEmailAndPassword(
-        auth,
-        registerEmail,
-        registerPassword
-      ).then((userCredential) => {
-        // Signed in
+
+    createUserWithEmailAndPassword(auth, registerEmail, registerPassword)
+      .then((userCredential) => {
         const user = userCredential.user;
-        console.log(user, user.uid);
-        registerUid.push(user.uid);
-        console.log(registerUid);
-        return user;
+        console.log(user);
+        createUser(user.uid);
+      })
+      .catch((error) => {
+        const errorCode = error.code;
+        const errorMessage = error.message;
+        console.log(errorCode, errorMessage);
       });
-      createUser();
-    } catch (err) {
-      console.error(err);
-    }
   };
 
-  useEffect(() => {}, []);
-
-  const createUser = async () => {
-    console.log(registerUid);
+  const createUser = async (uid) => {
+    console.log(uid);
     let newUser = {
       firstName: registerFirstName || null,
       lastName: registerLastName || null,
       age: registerAge || null,
       contractDate: registerContractDate || null,
       hoursPerWeek: registerHoursPerWeek || null,
-      authIDs: registerUid || null,
-      admin: registerAdmin || null,
+      role: registerRole || null,
     };
     console.log(newUser);
     try {
-      await addDoc(usersRef, newUser);
+      await setDoc(doc(usersRef, uid), newUser);
       console.log("createUser:", newUser);
     } catch (err) {
       console.error(err);

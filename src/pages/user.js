@@ -67,23 +67,23 @@ export const User = (props) => {
   console.log(userList);
   console.log(user.uid);
 
-  useEffect(() => {
-    const result = userList.find((x) => {
-      console.log(x.authIDs);
-      const result = x.authIDs.find((y) => y === user.uid);
-      console.log(result);
-      return result;
-    });
-    console.log(result);
+  // useEffect(() => {
+  //   const result = userList.find((x) => {
+  //     console.log(x.authIDs);
+  //     const result = x.authIDs.find((y) => y === user.uid);
+  //     console.log(result);
+  //     return result;
+  //   });
+  //   console.log(result);
 
-    if (result === undefined) {
-      setNewUser(true);
-    } else {
-      setNewUser(false);
-    }
+  //   if (result === undefined) {
+  //     setNewUser(true);
+  //   } else {
+  //     setNewUser(false);
+  //   }
 
-    setCurrentUser(result);
-  }, [userList, user.uid]);
+  //   setCurrentUser(result);
+  // }, [userList, user.uid]);
 
   console.log("new user?", newUser);
   console.log(currentUser);
