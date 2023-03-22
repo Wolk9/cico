@@ -16,9 +16,14 @@ import { Cico } from "./pages/cico";
 import { User } from "./pages/user";
 import { checkUserRole } from "./components/helpers";
 
-const AuthenticatedRoute = ({ children, user, requiredRole, ...rest }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-
+const AuthenticatedRoute = ({
+  isAuthenticated,
+  setIsAuthenticated,
+  children,
+  user,
+  requiredRole,
+  ...rest
+}) => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
@@ -37,6 +42,7 @@ const AuthenticatedRoute = ({ children, user, requiredRole, ...rest }) => {
 
   return (
     <Route
+      isAuthenticated={isAuthenticated}
       {...rest}
       element={isAuthenticated ? children : <Navigate to="/" />}
     />
@@ -46,6 +52,7 @@ const AuthenticatedRoute = ({ children, user, requiredRole, ...rest }) => {
 const App = () => {
   const [user, setUser] = useState({});
   const [popUpVisible, setPopUpVisible] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -67,18 +74,23 @@ const App = () => {
   return (
     <Router>
       <div>
-        <Navigation />
+        <Navigation isAuthenticated={isAuthenticated} />
         <Routes>
           <Route
             exact
             path="/"
-            element={<Cico popUpVisible={popUpVisible} />}
+            element={<Cico popUpVisible={popUpVisible} user={user} />}
           />
           <Route path="/user" element={<User user={user} />} />
           <Route
             path="/admin"
             element={
-              <AuthenticatedRoute requiredRole="admin" user={user}>
+              <AuthenticatedRoute
+                setIsAuthenticated={setIsAuthenticated}
+                isAuthenticated={isAuthenticated}
+                requiredRole="admin"
+                user={user}
+              >
                 <Admin user={user} />
               </AuthenticatedRoute>
             }

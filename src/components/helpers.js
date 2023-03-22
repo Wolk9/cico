@@ -1,7 +1,9 @@
 import React from "react";
 import moment from "moment";
 import { db } from "../config/firebase";
+import { signOut } from "firebase/auth";
 import { collection, doc, setDoc, getDoc } from "firebase/firestore";
+import { auth } from "../config/firebase";
 
 export const date = (unixTime) => {
   console.log(unixTime);
@@ -52,5 +54,14 @@ export const checkUserRole = async (uid) => {
     }
   } else {
     console.log("User not found");
+  }
+};
+
+export const signOutUser = async () => {
+  console.log("signOutUser");
+  try {
+    await signOut(auth);
+  } catch (err) {
+    console.error(err);
   }
 };
