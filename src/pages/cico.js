@@ -33,22 +33,22 @@ export const Cico = (props) => {
 
   const eventsRef = collection(db, "events");
 
-  const saveEvent = () => {
+  const saveEvent = async () => {
     // console.log("saved: ", eventId);
-    const doesExist = true;
     const getEventToEnd = async () => {
       try {
-        const q = await query(
+        const q = query(
           eventsRef,
-          where("userId", "==", userId && "eventEnd", "!=", undefined)
+          where("userId", "==", userId && "eventEnd", "==", null)
         );
         const eventToEnd = getDocs(q);
+        console.log(eventToEnd);
         return eventToEnd;
       } catch (error) {
         console.log("event not found", error);
       }
     };
-    const eventToEnd = getEventToEnd();
+    const eventToEnd = await getEventToEnd();
     console.log(eventToEnd);
 
     if (!eventToEnd) {
@@ -69,6 +69,7 @@ export const Cico = (props) => {
       setDoc(doc(eventsRef), {
         userId: userId,
         eventStart: serverTimestamp(),
+        eventEnd: null,
       })
         .then(() => {
           //setEventSelection(eventId);
