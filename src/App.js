@@ -69,7 +69,7 @@ const App = () => {
     return unsubscribe;
   }, []);
 
-  console.log(user);
+  console.log(user.uid);
 
   return (
     <Router>

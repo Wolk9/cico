@@ -8,7 +8,7 @@ import { Column } from "primereact/column";
 import React, { useState, useEffect } from "react";
 import { Auth } from "../components/auth";
 import { auth, db } from "../config/firebase";
-import { signOutUser } from "../components/helpers";
+import { date, signOutUser, time, getUserData } from "../components/helpers";
 import {
   getFirestore,
   collection,
@@ -24,15 +24,30 @@ import {
   doc,
   where,
   serverTimestamp,
+  deleteDoc,
 } from "firebase/firestore";
 
 export const Cico = (props) => {
   const { popUpVisible, user } = props;
   const [running, setRunning] = useState(false);
+  const [currentUser, setCurrentUser] = useState("");
 
-  console.log(user.uid);
+  console.log(user);
 
   const userId = user.uid;
+
+  useEffect(() => {
+    getUserData(userId)
+      .then((userData) => {
+        const currentUser = userData;
+        setCurrentUser(currentUser);
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  }, [user]);
+
+  console.log(currentUser);
 
   const eventsRef = collection(db, "events");
 
@@ -95,7 +110,13 @@ export const Cico = (props) => {
 
   return (
     <div className="">
-      <div>{popUpVisible ? <Auth /> : <Card title="CICO"></Card>}</div>
+      <div>
+        {popUpVisible ? (
+          <Auth />
+        ) : (
+          <Card title={`CICO ${currentUser.firstName}`}></Card>
+        )}
+      </div>
       <div className="">
         <div className="">
           {popUpVisible ? (
@@ -103,7 +124,11 @@ export const Cico = (props) => {
           ) : (
             <div>
               <Buttons clockAction={clockAction} running={running} />
-              <EventList user={user} running={running} />
+              <EventList
+                user={user}
+                running={running}
+                setRunning={setRunning}
+              />
             </div>
           )}
         </div>
@@ -161,9 +186,9 @@ const Buttons = (props) => {
 };
 
 const EventList = (props) => {
-  const { user, running } = props;
+  const { user, running, setRunning } = props;
   const [events, setEvents] = useState([]);
-
+  const [trigger, setTrigger] = useState(false);
   const userId = user.uid;
 
   const eventsRef = collection(db, "events");
@@ -192,14 +217,69 @@ const EventList = (props) => {
       // Do something with the eventsForThisUser data, such as updating state
     };
     fetchEvents();
-  }, [running]);
+  }, [running, trigger]);
+
+  const deleteLog = (e) => {
+    // console.log("Clicked delete for:", e);
+
+    const docRef = doc(eventsRef, e);
+
+    deleteDoc(docRef)
+      .then(() => {
+        setTrigger(!trigger);
+        console.log("Entire Document has been deleted successfully.");
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  };
+
+  const startTimeBodyTemplate = (rowData) => {
+    const d = date(rowData.eventStart);
+    const t = time(rowData.eventStart);
+    return `${d} ${t}`;
+  };
+  const endTimeBodyTemplate = (rowData) => {
+    console.log(rowData);
+
+    if (rowData.eventEnd === "running") {
+      setRunning(true);
+
+      return "Running";
+    } else {
+      const d = date(rowData.eventEnd);
+      const t = time(rowData.eventEnd);
+      setRunning(false);
+      return `${d} ${t}`;
+    }
+  };
+
+  const deleteBodyTemplate = (rowData) => {
+    return (
+      <div
+        onClick={() => {
+          deleteLog(rowData.id);
+        }}
+      >
+        <i className="pi pi-delete-left" style={{ color: "red" }}></i>
+      </div>
+    );
+  };
 
   return (
     <Card title="List">
-      {" "}
-      <DataTable value={events}>
-        <Column field="eventStart.seconds" header="Start Time" />
-        <Column field="eventEnd.seconds" header="End Time" />
+      <DataTable value={events} dataKey="id">
+        <Column
+          field="eventStart.seconds"
+          header="Start Time"
+          body={startTimeBodyTemplate}
+        />
+        <Column
+          field="eventEnd.seconds"
+          header="End Time"
+          body={endTimeBodyTemplate}
+        />
+        <Column body={deleteBodyTemplate}></Column>
       </DataTable>
     </Card>
   );

@@ -10,7 +10,7 @@ export const date = (unixTime) => {
   const { seconds, nanoseconds } = unixTime;
   console.log(unixTime, seconds, nanoseconds);
   const Date = moment.unix(seconds).add(nanoseconds / 1000000, "milliseconds");
-  const formatedDate = Date.format("DD-MM-YYYY");
+  const formatedDate = Date.format("DD-MM-YY");
 
   console.log(formatedDate);
   return formatedDate;
@@ -21,7 +21,7 @@ export const time = (unixTime) => {
   const { seconds, nanoseconds } = unixTime;
   console.log(unixTime, seconds, nanoseconds);
   const Date = moment.unix(seconds).add(nanoseconds / 1000000, "milliseconds");
-  const formatedTime = Date.format("HH:mm:ss");
+  const formatedTime = Date.format("HH:mm");
 
   console.log(formatedTime);
   return formatedTime;
@@ -52,10 +52,21 @@ export const checkUserRole = async (uid) => {
     } else {
       console.log("User does not have admin role");
     }
+    return userData;
   } else {
     console.log("User not found");
   }
 };
+
+export const getUserData = async (uid) => {
+  const usersRef = collection(db, "users");
+
+  const userDoc = await getDoc(doc(usersRef, uid));
+  const userData = userDoc.data();
+  console.log(userData);
+  return userData;
+};
+
 
 export const signOutUser = async () => {
   console.log("signOutUser");
