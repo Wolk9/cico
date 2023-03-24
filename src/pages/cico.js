@@ -3,7 +3,9 @@ import { Button } from "primereact/button";
 import { Card } from "primereact/card";
 import { Panel } from "primereact/panel";
 import { Dialog } from "primereact/dialog";
-import React, { useState } from "react";
+import { DataTable } from "primereact/datatable";
+import { Column } from "primereact/column";
+import React, { useState, useEffect } from "react";
 import { Auth } from "../components/auth";
 import { auth, db } from "../config/firebase";
 import { signOutUser } from "../components/helpers";
@@ -26,6 +28,7 @@ import {
 
 export const Cico = (props) => {
   const { popUpVisible, user } = props;
+  const [running, setRunning] = useState(false);
 
   console.log(user.uid);
 
@@ -37,11 +40,15 @@ export const Cico = (props) => {
     // console.log("saved: ", eventId);
     const getEventToEnd = async () => {
       try {
-        const q = query(
-          eventsRef,
-          where("userId", "==", userId && "eventEnd", "==", null)
-        );
-        const eventToEnd = getDocs(q);
+        const q = query(eventsRef, where("eventEnd", "==", "running"));
+        const querySnapshot = await getDocs(q);
+        const eventsToEnd = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        console.log(eventsToEnd);
+        const eventToEnd = eventsToEnd.find((doc) => doc.userId === userId);
+
         console.log(eventToEnd);
         return eventToEnd;
       } catch (error) {
@@ -51,14 +58,14 @@ export const Cico = (props) => {
     const eventToEnd = await getEventToEnd();
     console.log(eventToEnd);
 
-    if (!eventToEnd) {
+    if (eventToEnd) {
       console.log("event is running");
 
-      setDoc(doc(eventsRef), {
+      updateDoc(doc(eventsRef, eventToEnd.id), {
         eventEnd: serverTimestamp(),
       })
         .then(() => {
-          //setEventSelection(eventId);
+          setRunning(false);
           console.log("event ended succesfully");
         })
         .catch((error) => {
@@ -69,10 +76,10 @@ export const Cico = (props) => {
       setDoc(doc(eventsRef), {
         userId: userId,
         eventStart: serverTimestamp(),
-        eventEnd: null,
+        eventEnd: "running",
       })
         .then(() => {
-          //setEventSelection(eventId);
+          setRunning(true);
           console.log("event started succesfully");
         })
         .catch((error) => {
@@ -95,7 +102,8 @@ export const Cico = (props) => {
             <></>
           ) : (
             <div>
-              <Buttons clockAction={clockAction} />
+              <Buttons clockAction={clockAction} running={running} />
+              <EventList user={user} />
             </div>
           )}
         </div>
@@ -105,14 +113,14 @@ export const Cico = (props) => {
 };
 
 const Buttons = (props) => {
-  const { clockAction } = props;
+  const { clockAction, running } = props;
   return (
     <Panel>
       <div className="p-buttonset">
         <button
           style={{
             backgroundColor: "green",
-            color: "white",
+            color: running ? "black" : "white",
             fontSize: "20px",
             height: "180px",
             width: "180px",
@@ -120,16 +128,18 @@ const Buttons = (props) => {
             borderRadius: "15px 0px 0px 15px",
             border: "0px",
             margin: "10px 0px",
-            cursor: "pointer",
+            cursor: running ? "pointer" : "default",
+            opacity: running ? 0.2 : 1,
           }}
+          disabled={running}
           onClick={() => clockAction()}
         >
-          In
+          {running ? "timer" : "In"}
         </button>
         <button
           style={{
             backgroundColor: "red",
-            color: "white",
+            color: !running ? "black" : "white",
             fontSize: "20px",
             height: "180px",
             width: "180px",
@@ -137,8 +147,10 @@ const Buttons = (props) => {
             borderRadius: "0px 15px 15px 0px",
             border: "0px",
             margin: "10px 0px",
-            cursor: "pointer",
+            cursor: !running ? "pointer" : "default",
+            opacity: !running ? 0.2 : 1,
           }}
+          disabled={!running}
           onClick={() => clockAction()}
         >
           Out
@@ -147,3 +159,49 @@ const Buttons = (props) => {
     </Panel>
   );
 };
+
+const EventList = (props) => {
+  const { user } = props;
+  const [events, setEvents] = useState([]);
+
+  const userId = user.uid;
+
+  const eventsRef = collection(db, "events");
+
+  const getEventsForThisUser = async () => {
+    try {
+      const q = query(eventsRef, where("userId", "==", userId));
+      const querySnapshot = await getDocs(q);
+      const eventsForThisUser = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      console.log(eventsForThisUser);
+
+      return eventsForThisUser;
+    } catch (error) {
+      console.log("event not found", error);
+    }
+  };
+
+  useEffect(() => {
+    const fetchEvents = async () => {
+      const eventsForThisUser = await getEventsForThisUser();
+      console.log(eventsForThisUser);
+      setEvents(eventsForThisUser);
+      // Do something with the eventsForThisUser data, such as updating state
+    };
+    fetchEvents();
+  }, []);
+
+  return (
+    <Card title="List">
+      {" "}
+      <DataTable value={events}>
+        <Column field="eventStart.seconds" header="Start Time" />
+        <Column field="eventEnd.seconds" header="End Time" />
+      </DataTable>
+    </Card>
+  );
+};
+
