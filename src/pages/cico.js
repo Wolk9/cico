@@ -103,7 +103,7 @@ export const Cico = (props) => {
           ) : (
             <div>
               <Buttons clockAction={clockAction} running={running} />
-              <EventList user={user} />
+              <EventList user={user} running={running} />
             </div>
           )}
         </div>
@@ -161,7 +161,7 @@ const Buttons = (props) => {
 };
 
 const EventList = (props) => {
-  const { user } = props;
+  const { user, running } = props;
   const [events, setEvents] = useState([]);
 
   const userId = user.uid;
@@ -192,7 +192,7 @@ const EventList = (props) => {
       // Do something with the eventsForThisUser data, such as updating state
     };
     fetchEvents();
-  }, []);
+  }, [running]);
 
   return (
     <Card title="List">
