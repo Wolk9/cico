@@ -31,6 +31,25 @@ export const Cico = (props) => {
   const { popUpVisible, user } = props;
   const [running, setRunning] = useState(null);
   const [currentUser, setCurrentUser] = useState("");
+  const [start, setStart] = useState(null);
+  const [end, setEnd] = useState(null);
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  const handleStart = () => {
+    setStart(Date.now());
+  };
+
+  const handleEnd = () => {
+    setEnd(Date.now());
+  };
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   console.log(user);
 
@@ -128,7 +147,15 @@ export const Cico = (props) => {
             <></>
           ) : (
             <div>
-              <Buttons clockAction={clockAction} running={running} />
+              <Buttons
+                clockAction={clockAction}
+                handleEnd={handleEnd}
+                handleStart={handleStart}
+                running={running}
+                start={start}
+                end={end}
+              />
+              <Timer start={start} end={end} currentTime={currentTime} />
               <EventList
                 user={user}
                 running={running}
@@ -143,7 +170,17 @@ export const Cico = (props) => {
 };
 
 const Buttons = (props) => {
-  const { clockAction, running } = props;
+  const { clockAction, running, handleStart, handleEnd, start, end } = props;
+  const clickOnClockIn = () => {
+    clockAction();
+    handleStart();
+  };
+
+  const clickOnClockOut = () => {
+    clockAction();
+    handleEnd();
+  };
+
   return (
     <Panel>
       <div className="p-buttonset">
@@ -162,7 +199,7 @@ const Buttons = (props) => {
             opacity: running ? 0.2 : 1,
           }}
           disabled={running}
-          onClick={() => clockAction()}
+          onClick={clickOnClockIn}
         >
           {running ? "timer" : "In"}
         </button>
@@ -181,9 +218,9 @@ const Buttons = (props) => {
             opacity: !running ? 0.2 : 1,
           }}
           disabled={!running}
-          onClick={() => clockAction()}
+          onClick={clickOnClockOut}
         >
-          Out
+          End
         </button>
       </div>
     </Panel>
@@ -285,6 +322,21 @@ const EventList = (props) => {
         <Column body={deleteBodyTemplate}></Column>
       </DataTable>
     </Card>
+  );
+};
+
+const Timer = (props) => {
+  const { start, end, currentTime } = props;
+  console.log(start, end, currentTime);
+
+  const duration = end ? start - end : currentTime - start;
+  console.log(duration);
+  const formattedDuration = time(duration);
+
+  return (
+    <div className="">
+      <h1 className="">{formattedDuration}</h1>
+    </div>
   );
 };
 
