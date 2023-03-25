@@ -191,7 +191,7 @@ const Buttons = (props) => {
 };
 
 const EventList = (props) => {
-  const { user, running, setRunning } = props;
+  const { user, running } = props;
   const [events, setEvents] = useState([]);
   const [trigger, setTrigger] = useState(false);
   const userId = user.uid;
