@@ -29,10 +29,12 @@ import {
 
 export const Cico = (props) => {
   const { popUpVisible, user } = props;
-  const [running, setRunning] = useState(false);
+  const [running, setRunning] = useState(null);
   const [currentUser, setCurrentUser] = useState("");
 
   console.log(user);
+
+  console.log("Running: ", running);
 
   const userId = user.uid;
 
@@ -76,6 +78,8 @@ export const Cico = (props) => {
     if (eventToEnd) {
       console.log("event is running");
 
+      console.log("Running: ", running);
+
       updateDoc(doc(eventsRef, eventToEnd.id), {
         eventEnd: serverTimestamp(),
       })
@@ -101,6 +105,7 @@ export const Cico = (props) => {
           console.error("Error starting new event in Firebase Database", error);
         });
     }
+    console.log("Running: ", running);
   };
 
   const clockAction = () => {
@@ -243,13 +248,11 @@ const EventList = (props) => {
     console.log(rowData);
 
     if (rowData.eventEnd === "running") {
-      setRunning(true);
-
       return "Running";
     } else {
       const d = date(rowData.eventEnd);
       const t = time(rowData.eventEnd);
-      setRunning(false);
+
       return `${d} ${t}`;
     }
   };

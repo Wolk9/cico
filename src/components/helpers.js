@@ -6,24 +6,24 @@ import { collection, doc, setDoc, getDoc } from "firebase/firestore";
 import { auth } from "../config/firebase";
 
 export const date = (unixTime) => {
-  console.log(unixTime);
+  //console.log(unixTime);
   const { seconds, nanoseconds } = unixTime;
-  console.log(unixTime, seconds, nanoseconds);
+  //console.log(unixTime, seconds, nanoseconds);
   const Date = moment.unix(seconds).add(nanoseconds / 1000000, "milliseconds");
   const formatedDate = Date.format("DD-MM-YY");
 
-  console.log(formatedDate);
+  //console.log(formatedDate);
   return formatedDate;
 };
 
 export const time = (unixTime) => {
-  console.log(unixTime);
+  //console.log(unixTime);
   const { seconds, nanoseconds } = unixTime;
-  console.log(unixTime, seconds, nanoseconds);
+  //console.log(unixTime, seconds, nanoseconds);
   const Date = moment.unix(seconds).add(nanoseconds / 1000000, "milliseconds");
   const formatedTime = Date.format("HH:mm");
 
-  console.log(formatedTime);
+  //console.log(formatedTime);
   return formatedTime;
 };
 
@@ -63,7 +63,7 @@ export const getUserData = async (uid) => {
 
   const userDoc = await getDoc(doc(usersRef, uid));
   const userData = userDoc.data();
-  console.log(userData);
+  //console.log(userData);
   return userData;
 };
 
