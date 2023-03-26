@@ -8,7 +8,13 @@ import { Column } from "primereact/column";
 import React, { useState, useEffect } from "react";
 import { Auth } from "../components/auth";
 import { auth, db } from "../config/firebase";
-import { date, signOutUser, time, getUserData } from "../components/helpers";
+import {
+  date,
+  signOutUser,
+  time,
+  getUserData,
+  difference,
+} from "../components/helpers";
 import {
   getFirestore,
   collection,
@@ -33,7 +39,8 @@ export const Cico = (props) => {
   const [currentUser, setCurrentUser] = useState("");
   const [start, setStart] = useState(null);
   const [end, setEnd] = useState(null);
-  const [currentTime, setCurrentTime] = useState(new Date());
+  const [runningEvent, setRunningEvent] = useState(null);
+  const [elapsedTime, setElapsedTime] = useState(0);
 
   const handleStart = () => {
     setStart(Date.now());
@@ -42,16 +49,6 @@ export const Cico = (props) => {
   const handleEnd = () => {
     setEnd(Date.now());
   };
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  console.log(user);
 
   console.log("Running: ", running);
 
@@ -68,12 +65,9 @@ export const Cico = (props) => {
       });
   }, [user]);
 
-  console.log(currentUser);
-
   const eventsRef = collection(db, "events");
 
   const saveEvent = async () => {
-    // console.log("saved: ", eventId);
     const getEventToEnd = async () => {
       try {
         const q = query(eventsRef, where("eventEnd", "==", "running"));
@@ -86,6 +80,7 @@ export const Cico = (props) => {
         const eventToEnd = eventsToEnd.find((doc) => doc.userId === userId);
 
         console.log(eventToEnd);
+
         return eventToEnd;
       } catch (error) {
         console.log("event not found", error);
@@ -93,6 +88,47 @@ export const Cico = (props) => {
     };
     const eventToEnd = await getEventToEnd();
     console.log(eventToEnd);
+
+    const calculateTotalEventTime = async (eventId) => {
+      console.log(eventId);
+      const docRef = doc(eventsRef, eventId);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        const eventData = docSnap.data();
+        const eventStart = eventData.eventStart;
+        const eventEnd = eventData.eventEnd;
+
+        if (eventEnd !== "running") {
+          // Convert eventStart and eventEnd to Date objects
+          const startDate = new Date(eventStart.seconds * 1000);
+          const endDate = new Date(eventEnd.seconds * 1000);
+
+          // Get the difference between the dates in milliseconds
+          const diffInMs = endDate.getTime() - startDate.getTime();
+
+          // Convert the difference to a Unix timestamp
+          const diffInUnixTimestamp = Math.floor(diffInMs / 1000);
+
+          updateDoc(doc(eventsRef, eventId), {
+            totalTime: diffInUnixTimestamp,
+          })
+            .then(() => {
+              console.log("totalTime added succesfully");
+            })
+            .catch((error) => {
+              console.error(
+                "totalTime is not added in Firebase Database",
+                error
+              );
+            });
+        } else {
+          console.log("No such document!");
+        }
+      } else {
+        console.log("event not ended yet, so no time could be calculated");
+      }
+    };
 
     if (eventToEnd) {
       console.log("event is running");
@@ -104,6 +140,7 @@ export const Cico = (props) => {
       })
         .then(() => {
           setRunning(false);
+          calculateTotalEventTime(eventToEnd.id);
           console.log("event ended succesfully");
         })
         .catch((error) => {
@@ -115,9 +152,11 @@ export const Cico = (props) => {
         userId: userId,
         eventStart: serverTimestamp(),
         eventEnd: "running",
+        totalTime: null,
       })
         .then(() => {
           setRunning(true);
+          setRunningEvent(eventToEnd);
           console.log("event started succesfully");
         })
         .catch((error) => {
@@ -155,11 +194,14 @@ export const Cico = (props) => {
                 start={start}
                 end={end}
               />
-              <Timer start={start} end={end} currentTime={currentTime} />
+
               <EventList
                 user={user}
                 running={running}
                 setRunning={setRunning}
+                runningEvent={runningEvent}
+                elapsedTime={elapsedTime}
+                setElapsedTime={setElapsedTime}
               />
             </div>
           )}
@@ -228,7 +270,14 @@ const Buttons = (props) => {
 };
 
 const EventList = (props) => {
-  const { user, running } = props;
+  const {
+    user,
+    running,
+    setRunning,
+    runningEvent,
+    elapsedTime,
+    setElapsedTime,
+  } = props;
   const [events, setEvents] = useState([]);
   const [trigger, setTrigger] = useState(false);
   const userId = user.uid;
@@ -256,6 +305,7 @@ const EventList = (props) => {
       const eventsForThisUser = await getEventsForThisUser();
       console.log(eventsForThisUser);
       setEvents(eventsForThisUser);
+
       // Do something with the eventsForThisUser data, such as updating state
     };
     fetchEvents();
@@ -282,15 +332,31 @@ const EventList = (props) => {
     return `${d} ${t}`;
   };
   const endTimeBodyTemplate = (rowData) => {
-    console.log(rowData);
+    // console.log(rowData);
 
     if (rowData.eventEnd === "running") {
+      setRunning(true);
       return "Running";
     } else {
-      const d = date(rowData.eventEnd);
       const t = time(rowData.eventEnd);
 
-      return `${d} ${t}`;
+      return `${t}`;
+    }
+  };
+
+  const totalTimeBodyTemplate = (rowData) => {
+    if (rowData.totalTime !== null) {
+      const t = difference(rowData.eventStart, rowData.eventEnd);
+
+      return `${t}`;
+    } else {
+      return (
+        <Timer
+          unixTimestamp={rowData.eventStart.seconds}
+          elapsedTime={elapsedTime}
+          setElapsedTime={setElapsedTime}
+        />
+      );
     }
   };
 
@@ -307,17 +373,29 @@ const EventList = (props) => {
   };
 
   return (
-    <Card title="List">
-      <DataTable value={events} dataKey="id">
+    <Card title="Working Hours">
+      <DataTable
+        value={events}
+        dataKey="id"
+        size="small"
+        emptyMessage="No events yet"
+      >
         <Column
           field="eventStart.seconds"
-          header="Start Time"
+          header="Start"
           body={startTimeBodyTemplate}
+          style={{ width: "10rem" }}
         />
         <Column
           field="eventEnd.seconds"
-          header="End Time"
+          header="End"
           body={endTimeBodyTemplate}
+        />
+        <Column
+          field="eventEnd.totalTime"
+          header="Total"
+          body={totalTimeBodyTemplate}
+          style={{ width: "5rem" }}
         />
         <Column body={deleteBodyTemplate}></Column>
       </DataTable>
@@ -325,18 +403,27 @@ const EventList = (props) => {
   );
 };
 
-const Timer = (props) => {
-  const { start, end, currentTime } = props;
-  console.log(start, end, currentTime);
+const Timer = ({ unixTimestamp, elapsedTime, setElapsedTime }) => {
+  console.log(unixTimestamp);
 
-  const duration = end ? start - end : currentTime - start;
-  console.log(duration);
-  const formattedDuration = time(duration);
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      const currentTime = Math.floor(Date.now() / 1000);
+      setElapsedTime(currentTime - unixTimestamp);
+    }, 1000);
 
-  return (
-    <div className="">
-      <h1 className="">{formattedDuration}</h1>
-    </div>
-  );
+    return () => clearInterval(intervalId);
+  }, [unixTimestamp]);
+
+  const formatTime = (time) => {
+    const hours = Math.floor(time / 3600);
+    const minutes = Math.floor((time % 3600) / 60);
+    const seconds = time % 60;
+    return `${hours}:${minutes < 10 ? "0" : ""}${minutes}:${
+      seconds < 10 ? "0" : ""
+    }${seconds}`;
+  };
+
+  return <div>{formatTime(elapsedTime)}</div>;
 };
 
