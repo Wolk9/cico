@@ -42,14 +42,6 @@ export const Cico = (props) => {
   const [runningEvent, setRunningEvent] = useState(null);
   const [elapsedTime, setElapsedTime] = useState(0);
 
-  const handleStart = () => {
-    setStart(Date.now());
-  };
-
-  const handleEnd = () => {
-    setEnd(Date.now());
-  };
-
   console.log("Running: ", running);
 
   const userId = user.uid;
@@ -114,6 +106,7 @@ export const Cico = (props) => {
             totalTime: diffInUnixTimestamp,
           })
             .then(() => {
+              setRunning(false);
               console.log("totalTime added succesfully");
             })
             .catch((error) => {
@@ -140,6 +133,8 @@ export const Cico = (props) => {
       })
         .then(() => {
           setRunning(false);
+        })
+        .then(() => {
           calculateTotalEventTime(eventToEnd.id);
           console.log("event ended succesfully");
         })
@@ -166,9 +161,14 @@ export const Cico = (props) => {
     console.log("Running: ", running);
   };
 
-  const clockAction = () => {
-    console.log("clockIn");
-    saveEvent(1, userId);
+  const handleStart = () => {
+    setStart(Date.now());
+    saveEvent();
+  };
+
+  const handleEnd = () => {
+    setEnd(Date.now());
+    saveEvent();
   };
 
   return (
@@ -187,7 +187,6 @@ export const Cico = (props) => {
           ) : (
             <div>
               <Buttons
-                clockAction={clockAction}
                 handleEnd={handleEnd}
                 handleStart={handleStart}
                 running={running}
@@ -212,59 +211,113 @@ export const Cico = (props) => {
 };
 
 const Buttons = (props) => {
-  const { clockAction, running, handleStart, handleEnd, start, end } = props;
+  const { running, handleStart, handleEnd, start, end } = props;
+  const [buttonState, setButtonState] = useState(false);
   const clickOnClockIn = () => {
-    clockAction();
     handleStart();
   };
 
   const clickOnClockOut = () => {
-    clockAction();
     handleEnd();
   };
 
+  useEffect(() => {
+    if (running) {
+      setButtonState(true);
+    } else {
+      setButtonState(false);
+    }
+  }, [running]);
+
   return (
-    <Panel>
-      <div className="p-buttonset">
-        <button
+    <Panel className="p-m-0">
+      <div className="p-d-flex p-jc-center p-ai-center flex-wrap-sm">
+        <Button
+          className="p-mr-0"
+          label={buttonState ? "timer" : "In"}
+          disabled={buttonState}
+          onClick={clickOnClockIn}
+          cursor={buttonState ? "pointer" : "default"}
           style={{
             backgroundColor: "green",
-            color: running ? "black" : "white",
+            color: buttonState ? "black" : "white",
             fontSize: "20px",
-            height: "180px",
-            width: "180px",
+            height: "200px",
+            width: "50%",
             padding: "10px 60px",
             borderRadius: "15px 0px 0px 15px",
             border: "0px",
-            margin: "10px 0px",
-            cursor: running ? "pointer" : "default",
-            opacity: running ? 0.2 : 1,
+            margin: "0px",
+            textAlign: "center",
+            opacity: !buttonState ? 1 : 0.2,
           }}
-          disabled={running}
-          onClick={clickOnClockIn}
-        >
-          {running ? "timer" : "In"}
-        </button>
-        <button
+        />
+        <Button
+          className="p-ml-0"
+          label="End"
+          disabled={!buttonState}
+          onClick={clickOnClockOut}
+          cursor={!buttonState ? "pointer" : "default"}
           style={{
             backgroundColor: "red",
-            color: !running ? "black" : "white",
+            color: !buttonState ? "black" : "white",
             fontSize: "20px",
-            height: "180px",
-            width: "180px",
+            height: "200px",
+            width: "50%",
             padding: "10px 60px",
             borderRadius: "0px 15px 15px 0px",
             border: "0px",
-            margin: "10px 0px",
-            cursor: !running ? "pointer" : "default",
-            opacity: !running ? 0.2 : 1,
+            margin: "0px",
+            textAlign: "center",
+            opacity: buttonState ? 1 : 0.2,
           }}
-          disabled={!running}
-          onClick={clickOnClockOut}
-        >
-          End
-        </button>
+        />
       </div>
+
+      {/* <div className="p-d-flex p-jc-center p-ai-center p-buttonset flex-wrap style={{ whiteSpace: 'nowrap' }}">
+        <div className="p-ml-1">
+          <button
+            style={{
+              backgroundColor: "green",
+              color: running ? "black" : "white",
+              fontSize: "20px",
+              height: "150px",
+              width: "120px",
+              padding: "10px 60px",
+              borderRadius: "15px 0px 0px 15px",
+              border: "0px",
+              margin: "10px 0px",
+              cursor: running ? "pointer" : "default",
+              opacity: running ? 0.2 : 1,
+            }}
+            disabled={running}
+            onClick={clickOnClockIn}
+          >
+            {running ? "timer" : "In"}
+          </button>
+        </div>
+        <div className="p-mr-1">
+          <button
+            style={{
+              backgroundColor: "red",
+              color: !running ? "black" : "white",
+              fontSize: "20px",
+              height: "150px",
+              width: "120px",
+              padding: "10px 60px",
+              borderRadius: "0px 15px 15px 0px",
+              border: "0px",
+              margin: "10px 0px",
+              cursor: !running ? "pointer" : "default",
+              opacity: !running ? 0.2 : 1,
+            }}
+            disabled={!running}
+            onClick={clickOnClockOut}
+          >
+            End
+          </button>
+        </div>
+      </div> */}
     </Panel>
   );
 };
