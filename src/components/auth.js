@@ -1,6 +1,5 @@
-
-import { InputText } from 'primereact/inputtext';
-import { Button } from 'primereact/button';
+import { InputText } from "primereact/inputtext";
+import { Button } from "primereact/button";
 import { Card } from "primereact/card";
 import { Password } from "primereact/password";
 import { InputNumber } from "primereact/inputnumber";
@@ -10,15 +9,9 @@ import { auth, db } from "../config/firebase";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  signInWithPopup,
-  signOut,
-  onAuthStateChanged,
-  getAuth,
 } from "firebase/auth";
 import { setDoc, collection, doc } from "firebase/firestore";
-import { useEffect, useState } from "react";
-import { async } from "@firebase/util";
-import { Input } from "@mui/material";
+import { useState } from "react";
 
 export const Auth = () => {
   const [showSignUp, setShowSignUp] = useState(false);
@@ -46,6 +39,7 @@ const SignInDialog = (props) => {
   const { setShowSignUp } = props;
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [errorMessage, setErrorMessage] = useState(null);
 
   const signInUser = async () => {
     console.log("signInUser");
@@ -53,6 +47,7 @@ const SignInDialog = (props) => {
       const user = await signInWithEmailAndPassword(auth, email, password);
       console.log(user);
     } catch (err) {
+      setErrorMessage(err.message);
       console.error(err);
     }
   };
@@ -97,6 +92,14 @@ const SignInDialog = (props) => {
           link
         />
       </div>
+      <Dialog
+        header="Error"
+        visible={errorMessage !== null}
+        onHide={() => setErrorMessage(null)}
+      >
+        <div>{errorMessage}</div>
+        <Button label="OK" onClick={() => setErrorMessage(null)} />
+      </Dialog>
     </>
   );
 };

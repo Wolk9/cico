@@ -6,7 +6,7 @@ import { findAllLogs } from "../services/logs";
 import { Card } from "primereact/card";
 import { getDb } from "../services/db";
 import EventSelect from "./EventSelect";
-import { useTimer } from "../services/useTimer";
+
 
 const LogTable = (props) => {
   const { users, events, userSelection, eventSelection, setEventSelection } =
