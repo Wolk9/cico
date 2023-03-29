@@ -1,6 +1,5 @@
-
-import { InputText } from 'primereact/inputtext';
-import { Button } from 'primereact/button';
+import { InputText } from "primereact/inputtext";
+import { Button } from "primereact/button";
 import { Card } from "primereact/card";
 import { Password } from "primereact/password";
 import { InputNumber } from "primereact/inputnumber";
@@ -10,15 +9,9 @@ import { auth, db } from "../config/firebase";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  signInWithPopup,
-  signOut,
-  onAuthStateChanged,
-  getAuth,
 } from "firebase/auth";
 import { setDoc, collection, doc } from "firebase/firestore";
-import { useEffect, useState } from "react";
-import { async } from "@firebase/util";
-import { Input } from "@mui/material";
+import { useState } from "react";
 
 export const Auth = () => {
   const [showSignUp, setShowSignUp] = useState(false);
@@ -46,6 +39,7 @@ const SignInDialog = (props) => {
   const { setShowSignUp } = props;
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [errorMessage, setErrorMessage] = useState(null);
 
   const signInUser = async () => {
     console.log("signInUser");
@@ -53,6 +47,7 @@ const SignInDialog = (props) => {
       const user = await signInWithEmailAndPassword(auth, email, password);
       console.log(user);
     } catch (err) {
+      setErrorMessage(err.message);
       console.error(err);
     }
   };
@@ -68,18 +63,18 @@ const SignInDialog = (props) => {
 
   return (
     <>
-      <div className="p-inputgroup flex align-items-center justify-content-center bg-grey-500 font-bold text-white m-2 px-1 py-1 border-round">
-        <span className="p-inputgroup-addon">
-          <i className="pi pi-user"></i>
+      <div className="flex flex-column align-items-center gap-2 m-2">
+        <span className="">
+          <i className="mr-2 pi pi-user"></i>
           <InputText
             placeholder="Email..."
             onChange={(e) => setEmail(e.target.value)}
           />
         </span>
       </div>
-      <div className="p-inputgroup flex align-items-center justify-content-center bg-grey-500 font-bold text-white m-2 px-1 py-1 border-round">
-        <span className="p-inputgroup-addon">
-          <i className="pi pi-question"></i>
+      <div className="flex flex-column align-items-center gap-2 m-2">
+        <span className="">
+          <i className="mr-2 pi pi-question"></i>
           <Password
             type="password"
             placeholder="Password..."
@@ -97,6 +92,14 @@ const SignInDialog = (props) => {
           link
         />
       </div>
+      <Dialog
+        header="Error"
+        visible={errorMessage !== null}
+        onHide={() => setErrorMessage(null)}
+      >
+        <div>{errorMessage}</div>
+        <Button label="OK" onClick={() => setErrorMessage(null)} />
+      </Dialog>
     </>
   );
 };
@@ -110,7 +113,7 @@ const SignUpDialog = (props) => {
   const [registerValue, setRegisterValue] = useState("");
   const [registerFirstName, setRegisterFirstName] = useState("");
   const [registerLastName, setRegisterLastName] = useState("");
-  const [registerAge, setRegisterAge] = useState(0);
+  const [registerAge, setRegisterAge] = useState(18);
   const [registerHoursPerWeek, setRegisterHoursPerWeek] = useState(24);
   const [registerContractDate, setRegisterContractDate] = useState("");
   const [registerRole, setRegisterRole] = useState("user");
@@ -154,18 +157,18 @@ const SignUpDialog = (props) => {
 
   return (
     <>
-      <div className="p-inputgroup flex align-items-center justify-content-center bg-grey-500 font-bold text-white m-2 px-1 py-1 border-round">
-        <span className="p-inputgroup-addon">
-          <i className="pi pi-user"></i>
+      <div className="flex flex-column align-items-center gap-2 m-2">
+        <span className="">
+          <i className="mr-2 pi pi-user"></i>
           <InputText
             placeholder="Register Email..."
             onChange={(e) => setRegisterEmail(e.target.value)}
           />
         </span>
       </div>
-      <div className="p-inputgroup flex align-items-center justify-content-center bg-grey-500 font-bold text-white m-2 px-1 py-1 border-round">
-        <span className="p-inputgroup-addon ">
-          <i className="pi pi-question"></i>
+      <div className="flex flex-column align-items-center gap-2 m-2">
+        <span className="">
+          <i className="mr-2 pi pi-question"></i>
           <Password
             type="password"
             value={registerValue}
@@ -177,59 +180,83 @@ const SignUpDialog = (props) => {
           />
         </span>
       </div>
-      <div className="p-inputgroup flex align-items-center justify-content-center bg-grey-500 font-bold text-white m-2 px-1 py-1 border-round">
-        <span className="p-inputgroup-addon">
-          <i className="pi"></i>
+      <div className="flex flex-column align-items-center gap-2 m-2">
+        <span className="">
+          <i className="mr-2 pi pi-angle-right"></i>
           <InputText
             placeholder="First Name..."
             onChange={(e) => setRegisterFirstName(e.target.value)}
           />
         </span>
       </div>
-      <div className="p-inputgroup flex align-items-center justify-content-center bg-grey-500 font-bold text-white m-2 px-1 py-1 border-round">
-        <span className="p-inputgroup-addon">
-          <i className="pi"></i>
+      <div className="flex flex-column align-items-center gap-2 m-2">
+        <span className="">
+          <i className="mr-2 pi pi-angle-right"></i>
           <InputText
             placeholder="Last Name..."
             onChange={(e) => setRegisterLastName(e.target.value)}
           />
         </span>
       </div>
-      <div className="p-inputgroup flex align-items-center justify-content-center bg-grey-500 font-bold text-white m-2 px-1 py-1 border-round">
-        <span className="p-inputgroup-addon">
-          <i className="pi"></i>
+      <div className="flex flex-column align-items-center gap-0 p-fluid">
+        <small htmlFor="age" className="mb-1 mt-1">
+          Your age
+        </small>
+        <div className="plusMinField">
           <InputNumber
+            inputId="age"
             value={registerAge}
-            placeholder="Age..."
-            onChange={(e) => setRegisterAge(e.value)}
+            onValueChange={(e) => setRegisterAge(e.value)}
+            showButtons
+            buttonLayout="horizontal"
+            step={1}
+            decrementButtonClassName="p-button-danger"
+            incrementButtonClassName="p-button-success"
+            incrementButtonIcon="mr-1 pi pi-plus"
+            decrementButtonIcon="ml-1 pi pi-minus"
+            mode="decimal"
+            min={18}
+            max={80}
           />
-        </span>
+        </div>
       </div>
-      <div className="p-inputgroup flex align-items-center justify-content-center bg-grey-500 font-bold text-white m-2 px-1 py-1 border-round">
-        <span className="p-inputgroup-addon">
-          <i className="pi"></i>
-          <InputNumber
-            value={registerHoursPerWeek}
-            placeholder="Hours/Week"
-            onChange={(e) => setRegisterHoursPerWeek(e.value)}
-          />
-        </span>
+      <div className="flex flex-column align-items-center gap-0">
+        <small htmlFor="hrswk" className="mb-1 mt-2">
+          hrs/wk
+        </small>
+
+        <InputNumber
+          inputId="hrswk"
+          value={registerHoursPerWeek}
+          showButtons
+          buttonLayout="horizontal"
+          step={4}
+          decrementButtonClassName="p-button-danger"
+          incrementButtonClassName="p-button-success"
+          incrementButtonIcon="mr-1 pi pi-plus"
+          decrementButtonIcon="ml-1 pi pi-minus"
+          mode="decimal"
+          min={0}
+          max={32}
+          onChange={(e) => setRegisterHoursPerWeek(e.value)}
+        />
       </div>
-      <div className="p-inputgroup flex align-items-center justify-content-center bg-grey-500 font-bold text-white m-2 px-1 py-1 border-round">
-        <span className="p-inputgroup-addon">
-          <i className="pi"></i>
-          <Calendar
-            value={registerContractDate}
-            placeholder="Contractdate..."
-            onChange={(e) => setRegisterContractDate(e.value)}
-            dateFormat="dd/mm/yy"
-          />
-        </span>
+      <div className="flex flex-column align-items-center gap-2 m-2">
+        <small htmlFor="contractDate" className="mb-0 mt-2">
+          Contract start date
+        </small>
+        <Calendar
+          inputId="contractDate"
+          value={registerContractDate}
+          placeholder="Contractdate..."
+          onChange={(e) => setRegisterContractDate(e.value)}
+          dateFormat="dd/mm/yy"
+        />
       </div>
-      <div className="p-inputgroup flex align-items-center justify-content-center bg-grey-500 font-bold text-white m-2 px-1 py-1 border-round">
+      <div className="flex flex-column align-items-center gap-2 m-2">
         <Button label="SignUp" onClick={registerUser} />
       </div>
-      <div className="p-inputgroup flex align-items-center justify-content-center bg-grey-500 font-bold text-white m-2 px-1 py-1 border-round">
+      <div className="flex flex-column align-items-center gap-2 m-2">
         <div>
           <Button
             label="already an user?"

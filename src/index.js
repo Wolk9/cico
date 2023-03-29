@@ -4,6 +4,7 @@ import App from './App';
  
 //theme
 import "./theme.css";
+import "./custom.css";
 
 //core
 import "primereact/resources/primereact.min.css";

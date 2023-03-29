@@ -8,7 +8,13 @@ import { Column } from "primereact/column";
 import React, { useState, useEffect } from "react";
 import { Auth } from "../components/auth";
 import { auth, db } from "../config/firebase";
-import { date, signOutUser, time, getUserData } from "../components/helpers";
+import {
+  date,
+  signOutUser,
+  time,
+  getUserData,
+  difference,
+} from "../components/helpers";
 import {
   getFirestore,
   collection,
@@ -29,10 +35,14 @@ import {
 
 export const Cico = (props) => {
   const { popUpVisible, user } = props;
-  const [running, setRunning] = useState(false);
+  const [running, setRunning] = useState(null);
   const [currentUser, setCurrentUser] = useState("");
+  const [start, setStart] = useState(null);
+  const [end, setEnd] = useState(null);
+  const [runningEvent, setRunningEvent] = useState(null);
+  const [elapsedTime, setElapsedTime] = useState(0);
 
-  console.log(user);
+  console.log("Running: ", running);
 
   const userId = user.uid;
 
@@ -47,12 +57,9 @@ export const Cico = (props) => {
       });
   }, [user]);
 
-  console.log(currentUser);
-
   const eventsRef = collection(db, "events");
 
   const saveEvent = async () => {
-    // console.log("saved: ", eventId);
     const getEventToEnd = async () => {
       try {
         const q = query(eventsRef, where("eventEnd", "==", "running"));
@@ -65,6 +72,7 @@ export const Cico = (props) => {
         const eventToEnd = eventsToEnd.find((doc) => doc.userId === userId);
 
         console.log(eventToEnd);
+
         return eventToEnd;
       } catch (error) {
         console.log("event not found", error);
@@ -73,14 +81,61 @@ export const Cico = (props) => {
     const eventToEnd = await getEventToEnd();
     console.log(eventToEnd);
 
+    const calculateTotalEventTime = async (eventId) => {
+      console.log(eventId);
+      const docRef = doc(eventsRef, eventId);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        const eventData = docSnap.data();
+        const eventStart = eventData.eventStart;
+        const eventEnd = eventData.eventEnd;
+
+        if (eventEnd !== "running") {
+          // Convert eventStart and eventEnd to Date objects
+          const startDate = new Date(eventStart.seconds * 1000);
+          const endDate = new Date(eventEnd.seconds * 1000);
+
+          // Get the difference between the dates in milliseconds
+          const diffInMs = endDate.getTime() - startDate.getTime();
+
+          // Convert the difference to a Unix timestamp
+          const diffInUnixTimestamp = Math.floor(diffInMs / 1000);
+
+          updateDoc(doc(eventsRef, eventId), {
+            totalTime: diffInUnixTimestamp,
+          })
+            .then(() => {
+              setRunning(false);
+              console.log("totalTime added succesfully");
+            })
+            .catch((error) => {
+              console.error(
+                "totalTime is not added in Firebase Database",
+                error
+              );
+            });
+        } else {
+          console.log("No such document!");
+        }
+      } else {
+        console.log("event not ended yet, so no time could be calculated");
+      }
+    };
+
     if (eventToEnd) {
       console.log("event is running");
+
+      console.log("Running: ", running);
 
       updateDoc(doc(eventsRef, eventToEnd.id), {
         eventEnd: serverTimestamp(),
       })
         .then(() => {
           setRunning(false);
+        })
+        .then(() => {
+          calculateTotalEventTime(eventToEnd.id);
           console.log("event ended succesfully");
         })
         .catch((error) => {
@@ -92,20 +147,28 @@ export const Cico = (props) => {
         userId: userId,
         eventStart: serverTimestamp(),
         eventEnd: "running",
+        totalTime: null,
       })
         .then(() => {
           setRunning(true);
+          setRunningEvent(eventToEnd);
           console.log("event started succesfully");
         })
         .catch((error) => {
           console.error("Error starting new event in Firebase Database", error);
         });
     }
+    console.log("Running: ", running);
   };
 
-  const clockAction = () => {
-    console.log("clockIn");
-    saveEvent(1, userId);
+  const handleStart = () => {
+    setStart(Date.now());
+    saveEvent();
+  };
+
+  const handleEnd = () => {
+    setEnd(Date.now());
+    saveEvent();
   };
 
   return (
@@ -123,11 +186,21 @@ export const Cico = (props) => {
             <></>
           ) : (
             <div>
-              <Buttons clockAction={clockAction} running={running} />
+              <Buttons
+                handleEnd={handleEnd}
+                handleStart={handleStart}
+                running={running}
+                start={start}
+                end={end}
+              />
+
               <EventList
                 user={user}
                 running={running}
                 setRunning={setRunning}
+                runningEvent={runningEvent}
+                elapsedTime={elapsedTime}
+                setElapsedTime={setElapsedTime}
               />
             </div>
           )}
@@ -138,55 +211,126 @@ export const Cico = (props) => {
 };
 
 const Buttons = (props) => {
-  const { clockAction, running } = props;
+  const { running, handleStart, handleEnd, start, end } = props;
+  const [buttonState, setButtonState] = useState(false);
+  const clickOnClockIn = () => {
+    handleStart();
+  };
+
+  const clickOnClockOut = () => {
+    handleEnd();
+  };
+
+  useEffect(() => {
+    if (running) {
+      setButtonState(true);
+    } else {
+      setButtonState(false);
+    }
+  }, [running]);
+
   return (
-    <Panel>
-      <div className="p-buttonset">
-        <button
+    <Panel className="p-m-0">
+      <div className="p-d-flex p-jc-center p-ai-center flex-wrap-sm">
+        <Button
+          className="p-mr-0"
+          label={buttonState ? "timer" : "In"}
+          disabled={buttonState}
+          onClick={clickOnClockIn}
+          cursor={buttonState ? "pointer" : "default"}
           style={{
             backgroundColor: "green",
-            color: running ? "black" : "white",
+            color: buttonState ? "black" : "white",
             fontSize: "20px",
-            height: "180px",
-            width: "180px",
+            height: "200px",
+            width: "50%",
             padding: "10px 60px",
             borderRadius: "15px 0px 0px 15px",
             border: "0px",
-            margin: "10px 0px",
-            cursor: running ? "pointer" : "default",
-            opacity: running ? 0.2 : 1,
+            margin: "0px",
+            textAlign: "center",
+            opacity: !buttonState ? 1 : 0.2,
           }}
-          disabled={running}
-          onClick={() => clockAction()}
-        >
-          {running ? "timer" : "In"}
-        </button>
-        <button
+        />
+        <Button
+          className="p-ml-0"
+          label="End"
+          disabled={!buttonState}
+          onClick={clickOnClockOut}
+          cursor={!buttonState ? "pointer" : "default"}
           style={{
             backgroundColor: "red",
-            color: !running ? "black" : "white",
+            color: !buttonState ? "black" : "white",
             fontSize: "20px",
-            height: "180px",
-            width: "180px",
+            height: "200px",
+            width: "50%",
             padding: "10px 60px",
             borderRadius: "0px 15px 15px 0px",
             border: "0px",
-            margin: "10px 0px",
-            cursor: !running ? "pointer" : "default",
-            opacity: !running ? 0.2 : 1,
+            margin: "0px",
+            textAlign: "center",
+            opacity: buttonState ? 1 : 0.2,
           }}
-          disabled={!running}
-          onClick={() => clockAction()}
-        >
-          Out
-        </button>
+        />
       </div>
+
+      {/* <div className="p-d-flex p-jc-center p-ai-center p-buttonset flex-wrap style={{ whiteSpace: 'nowrap' }}">
+        <div className="p-ml-1">
+          <button
+            style={{
+              backgroundColor: "green",
+              color: running ? "black" : "white",
+              fontSize: "20px",
+              height: "150px",
+              width: "120px",
+              padding: "10px 60px",
+              borderRadius: "15px 0px 0px 15px",
+              border: "0px",
+              margin: "10px 0px",
+              cursor: running ? "pointer" : "default",
+              opacity: running ? 0.2 : 1,
+            }}
+            disabled={running}
+            onClick={clickOnClockIn}
+          >
+            {running ? "timer" : "In"}
+          </button>
+        </div>
+        <div className="p-mr-1">
+          <button
+            style={{
+              backgroundColor: "red",
+              color: !running ? "black" : "white",
+              fontSize: "20px",
+              height: "150px",
+              width: "120px",
+              padding: "10px 60px",
+              borderRadius: "0px 15px 15px 0px",
+              border: "0px",
+              margin: "10px 0px",
+              cursor: !running ? "pointer" : "default",
+              opacity: !running ? 0.2 : 1,
+            }}
+            disabled={!running}
+            onClick={clickOnClockOut}
+          >
+            End
+          </button>
+        </div>
+      </div> */}
     </Panel>
   );
 };
 
 const EventList = (props) => {
-  const { user, running, setRunning } = props;
+  const {
+    user,
+    running,
+    setRunning,
+    runningEvent,
+    elapsedTime,
+    setElapsedTime,
+  } = props;
   const [events, setEvents] = useState([]);
   const [trigger, setTrigger] = useState(false);
   const userId = user.uid;
@@ -214,6 +358,7 @@ const EventList = (props) => {
       const eventsForThisUser = await getEventsForThisUser();
       console.log(eventsForThisUser);
       setEvents(eventsForThisUser);
+
       // Do something with the eventsForThisUser data, such as updating state
     };
     fetchEvents();
@@ -240,17 +385,31 @@ const EventList = (props) => {
     return `${d} ${t}`;
   };
   const endTimeBodyTemplate = (rowData) => {
-    console.log(rowData);
+    // console.log(rowData);
 
     if (rowData.eventEnd === "running") {
       setRunning(true);
-
       return "Running";
     } else {
-      const d = date(rowData.eventEnd);
       const t = time(rowData.eventEnd);
-      setRunning(false);
-      return `${d} ${t}`;
+
+      return `${t}`;
+    }
+  };
+
+  const totalTimeBodyTemplate = (rowData) => {
+    if (rowData.totalTime !== null) {
+      const t = difference(rowData.eventStart, rowData.eventEnd);
+
+      return `${t}`;
+    } else {
+      return (
+        <Timer
+          unixTimestamp={rowData.eventStart.seconds}
+          elapsedTime={elapsedTime}
+          setElapsedTime={setElapsedTime}
+        />
+      );
     }
   };
 
@@ -267,21 +426,57 @@ const EventList = (props) => {
   };
 
   return (
-    <Card title="List">
-      <DataTable value={events} dataKey="id">
+    <Card title="Working Hours">
+      <DataTable
+        value={events}
+        dataKey="id"
+        size="small"
+        emptyMessage="No events yet"
+      >
         <Column
           field="eventStart.seconds"
-          header="Start Time"
+          header="Start"
           body={startTimeBodyTemplate}
+          style={{ width: "10rem" }}
         />
         <Column
           field="eventEnd.seconds"
-          header="End Time"
+          header="End"
           body={endTimeBodyTemplate}
+        />
+        <Column
+          field="eventEnd.totalTime"
+          header="Total"
+          body={totalTimeBodyTemplate}
+          style={{ width: "5rem" }}
         />
         <Column body={deleteBodyTemplate}></Column>
       </DataTable>
     </Card>
   );
+};
+
+const Timer = ({ unixTimestamp, elapsedTime, setElapsedTime }) => {
+  console.log(unixTimestamp);
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      const currentTime = Math.floor(Date.now() / 1000);
+      setElapsedTime(currentTime - unixTimestamp);
+    }, 1000);
+
+    return () => clearInterval(intervalId);
+  }, [unixTimestamp]);
+
+  const formatTime = (time) => {
+    const hours = Math.floor(time / 3600);
+    const minutes = Math.floor((time % 3600) / 60);
+    const seconds = time % 60;
+    return `${hours}:${minutes < 10 ? "0" : ""}${minutes}:${
+      seconds < 10 ? "0" : ""
+    }${seconds}`;
+  };
+
+  return <div>{formatTime(elapsedTime)}</div>;
 };
 
