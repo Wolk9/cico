@@ -21,9 +21,6 @@ const LogTable = (props) => {
     eventSelection
   );
 
-  // console.log("logs:", logs);
-  // console.log("LogTable props: ", props);
-
   if (!logs) return [];
 
   const selectedLogs = logs.filter((log) => {
@@ -37,40 +34,12 @@ const LogTable = (props) => {
 
   const lastLog = selectedLogs[selectedLogs.length - 1];
 
-  // const calculateTimePassed = () => {
-  //   let seconds = new Date();
-  //   let difference = +new Date() - +new Date(lastLog.timestamp.seconds);
-
-  //   let timePassed = {};
-
-  //   console.log(difference);
-
-  //   if (difference > 0) {
-  //     timePassed = {
-  //       days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-  //       hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-  //       minutes: Math.floor((difference / 1000 / 60) % 60),
-  //       seconds: Math.floor((difference / 1000) % 60),
-  //     };
-  //   }
-
-  //   return timePassed;
-  // };
-
-  // const timer = setTimeout(() => {
-  //   setTimePassed(calculateTimePassed());
-  // }, 5000);
-
-  // console.log("seconden:", timePassed);
-
   const selectedUser = users.filter((user) => {
     return user.userId === userSelection;
   });
 
   const timeDate = (timestamp) => {
     let stampObj = new Date(timestamp);
-
-    //console.log(timestamp.seconds, timestamp, stampObj);
 
     let day = stampObj.getDate();
     let month = stampObj.getMonth() + 1;
@@ -80,21 +49,6 @@ const LogTable = (props) => {
 
     return `${day}-${month}-${year} ${hour}:${minutes}`;
   };
-
-  // console.log(
-  //   "1 events:",
-  //   events,
-  //   "logs:",
-  //   logs,
-  //   "users:",
-  //   users,
-  //   "userSelection:",
-  //   userSelection,
-  //   "selectedLogs:",
-  //   selectedLogs.timestamp,
-  //   "selectedUser",
-  //   selectedUser
-  // );
 
   const deleteLog = (e) => {
     // console.log("Clicked delete for:", e);
@@ -111,9 +65,6 @@ const LogTable = (props) => {
       });
   };
 
-  // selectedLogs.map(
-  //   (x, i) => (x[i].timestamp.seconds = timeDate(x[i].timestamp))
-  // );
 
   const stampBodyTemplate = (rowData) => {
     return timeDate(rowData.timestamp);
@@ -122,6 +73,15 @@ const LogTable = (props) => {
   const eventBodyTemplate = (rowData) => {
     return events.find((x) => x.eventId === rowData.eventId).eventType;
   };
+
+  const editBodyTemplate = (rowData) => {
+    return (
+      <div onClick={() => setSelectedLog(rowData)}>
+        <i className="pi pi-pencil" style={{ color: "orange" }}></i>
+      </div>
+    );
+  };
+
 
   const deleteBodyTemplate = (rowData) => {
     return (
@@ -137,6 +97,16 @@ const LogTable = (props) => {
 
   return (
     <div>
+      {selectedLog.length > 0 && (
+        <Card title="Edit Log">
+          <EditLogForm
+            users={users}
+            events={events}
+            setEventSelection={setEventSelection}
+            selectedLog={selectedLog}
+          />
+        </Card>
+      )}
       <Card>
         {userSelection && (
           <EventSelect
@@ -150,18 +120,18 @@ const LogTable = (props) => {
       </Card>
       <Card title={selectedUser[0].firstName}>
         <DataTable value={selectedLogs} dataKey="id">
-          {/* // onClick={(e) => DeleteEvent(e.event.id)} */}
           <Column
             field="eventId"
             header="begin/einde"
             body={eventBodyTemplate}
-          ></Column>
+          />
           <Column
             field="timestamp"
             header="datum/tijd"
             body={stampBodyTemplate}
-          ></Column>
-          <Column body={deleteBodyTemplate}></Column>
+          />
+          <Column body={editBodyTemplate} />
+          <Column body={deleteBodyTemplate} />
         </DataTable>
       </Card>
     </div>
@@ -190,5 +160,62 @@ const GetMyLogs = (
 
   return logs;
 };
+
+const EditLogForm = (props) => {
+  const { users, events, setEventSelection, selectedLog } = props;
+
+  const [eventId, setEventId] = useState(selectedLog.eventId);
+
+  const handleEventChange = (e) => {
+    setEventId(e.value.eventId);
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const updatedLog = { ...selectedLog, eventId: eventId };
+    const docRef = doc(getDb(), "logs", selectedLog.id);
+    setToBeDeletedId(null);
+
+    setEventSelection(updatedLog.eventId);
+    setSelectedLog([]);
+
+    updateDoc(docRef, updatedLog)
+      .then(() => {
+        console.log("Document successfully updated!");
+      })
+      .catch((error) => {
+        console.error("Error updating document: ", error);
+      });
+  };
+
+  const handleCancel = (e) => {
+    setSelectedLog([]);
+  };
+
+  return (
+    <div className="p-fluid">
+      <form onSubmit={handleSubmit}>
+        <div className="p-field">
+          <label htmlFor="event">Event</label>
+          <EventSelect
+            value={{ eventId: eventId }}
+            onChange={handleEventChange}
+            events={events}
+            userSelection={selectedLog.userId}
+          />
+        </div>
+        <div className="p-field">
+          <Button label="Save" type="submit" />
+          <Button
+            label="Cancel"
+            onClick={handleCancel}
+            className="p-button-secondary"
+          />
+        </div>
+      </form>
+    </div>
+  );
+};
+
 
 export default LogTable;
