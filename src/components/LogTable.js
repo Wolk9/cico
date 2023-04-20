@@ -4,6 +4,7 @@ import { Column } from "primereact/column";
 import { getFirestore, doc, deleteDoc } from "firebase/firestore";
 import { findAllLogs } from "../services/logs";
 import { Card } from "primereact/card";
+import { Button } from "primereact/button";
 import { getDb } from "../services/db";
 import EventSelect from "./EventSelect";
 
@@ -131,8 +132,8 @@ const LogTable = (props) => {
             header="datum/tijd"
             body={stampBodyTemplate}
           />
-          <Column body={editBodyTemplate} />
-          <Column body={deleteBodyTemplate} />
+          <Column header="e" body={editBodyTemplate} />
+          <Column header="d" body={deleteBodyTemplate} />
         </DataTable>
       </Card>
     </div>
