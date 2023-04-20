@@ -82,6 +82,7 @@ const LogTable = (props) => {
     );
   };
 
+  // test
 
   const deleteBodyTemplate = (rowData) => {
     return (
