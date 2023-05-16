@@ -1,6 +1,6 @@
 import { Menubar } from "primereact/menubar";
 import { Button } from "primereact/button";
-import { signOutUser } from "../components/helpers";
+import { UserUtils } from "../components/helpers";
 
 const Navigation = (props) => {
   const { isAuthenticated } = props;
@@ -34,7 +34,7 @@ const Navigation = (props) => {
 
 const AuthenticatedButtons = () => {
   return (
-    <Button size="small" onClick={signOutUser}>
+    <Button size="small" onClick={UserUtils.signOutUser}>
       Sign Out
     </Button>
   );

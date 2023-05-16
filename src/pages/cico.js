@@ -1,28 +1,7 @@
-import { signOut } from "firebase/auth";
-import { Button } from "primereact/button";
-import { Card } from "primereact/card";
-import { Panel } from "primereact/panel";
-import { Dialog } from "primereact/dialog";
-import { DataTable } from "primereact/datatable";
-import { Column } from "primereact/column";
-import React, { useState, useEffect } from "react";
-import { Auth } from "../components/auth";
-import { auth, db } from "../config/firebase";
+import { useState, useEffect } from "react";
 import {
-  date,
-  signOutUser,
-  time,
-  getUserData,
-  difference,
-} from "../components/helpers";
-import {
-  getFirestore,
   collection,
-  addDoc,
   query,
-  orderBy,
-  limit,
-  onSnapshot,
   setDoc,
   getDoc,
   getDocs,
@@ -32,6 +11,10 @@ import {
   serverTimestamp,
   deleteDoc,
 } from "firebase/firestore";
+import { Auth } from "../components/auth";
+import { db } from "../config/firebase";
+import { DateFormatter, UserUtils } from "../components/helpers";
+import { Card } from "primereact/card";
 
 export const Cico = (props) => {
   const { popUpVisible, user } = props;
@@ -46,8 +29,10 @@ export const Cico = (props) => {
 
   const userId = user.uid;
 
+  console.log(userId)
+
   useEffect(() => {
-    getUserData(userId)
+    UserUtils.getUserData(userId)
       .then((userData) => {
         const currentUser = userData;
         setCurrentUser(currentUser);
@@ -57,57 +42,32 @@ export const Cico = (props) => {
       });
   }, [user]);
 
-  const eventsRef = collection(db, "events");
+  const eventsRepository = new EventsRepository(db);
+
+  console.log(eventsRepository);
 
   const saveEvent = async () => {
-    const getEventToEnd = async () => {
-      try {
-        const q = query(eventsRef, where("eventEnd", "==", "running"));
-        const querySnapshot = await getDocs(q);
-        const eventsToEnd = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        console.log(eventsToEnd);
-        const eventToEnd = eventsToEnd.find((doc) => doc.userId === userId);
-
-        console.log(eventToEnd);
-
-        return eventToEnd;
-      } catch (error) {
-        console.log("event not found", error);
-      }
-    };
-    const eventToEnd = await getEventToEnd();
-    console.log(eventToEnd);
+    const eventToEnd = await eventsRepository.getRunningEvent(userId);
 
     const calculateTotalEventTime = async (eventId) => {
       console.log(eventId);
-      const docRef = doc(eventsRef, eventId);
-      const docSnap = await getDoc(docRef);
+      const eventData = await eventsRepository.getEventById(eventId);
 
-      if (docSnap.exists()) {
-        const eventData = docSnap.data();
+      if (eventData) {
         const eventStart = eventData.eventStart;
         const eventEnd = eventData.eventEnd;
 
         if (eventEnd !== "running") {
-          // Convert eventStart and eventEnd to Date objects
-          const startDate = new Date(eventStart.seconds * 1000);
-          const endDate = new Date(eventEnd.seconds * 1000);
+          const diffInUnixTimestamp = DateFormatter.calculateTimeDifference(
+            eventStart,
+            eventEnd
+          );
 
-          // Get the difference between the dates in milliseconds
-          const diffInMs = endDate.getTime() - startDate.getTime();
-
-          // Convert the difference to a Unix timestamp
-          const diffInUnixTimestamp = Math.floor(diffInMs / 1000);
-
-          updateDoc(doc(eventsRef, eventId), {
-            totalTime: diffInUnixTimestamp,
-          })
+          eventsRepository
+            .updateEventTotalTime(eventId, diffInUnixTimestamp)
             .then(() => {
               setRunning(false);
-              console.log("totalTime added succesfully");
+              console.log("totalTime added successfully");
             })
             .catch((error) => {
               console.error(
@@ -126,33 +86,26 @@ export const Cico = (props) => {
     if (eventToEnd) {
       console.log("event is running");
 
-      console.log("Running: ", running);
-
-      updateDoc(doc(eventsRef, eventToEnd.id), {
-        eventEnd: serverTimestamp(),
-      })
+      eventsRepository
+        .updateEventEnd(eventToEnd.id)
         .then(() => {
           setRunning(false);
         })
         .then(() => {
           calculateTotalEventTime(eventToEnd.id);
-          console.log("event ended succesfully");
+          console.log("event ended successfully");
         })
         .catch((error) => {
           console.error("event not ended in Firebase Database", error);
         });
     } else {
       console.log("new event");
-      setDoc(doc(eventsRef), {
-        userId: userId,
-        eventStart: serverTimestamp(),
-        eventEnd: "running",
-        totalTime: null,
-      })
-        .then(() => {
+      eventsRepository
+        .createEvent(userId)
+        .then((event) => {
           setRunning(true);
-          setRunningEvent(eventToEnd);
-          console.log("event started succesfully");
+          setRunningEvent(event);
+          console.log("event started successfully");
         })
         .catch((error) => {
           console.error("Error starting new event in Firebase Database", error);
@@ -186,22 +139,29 @@ export const Cico = (props) => {
             <></>
           ) : (
             <div>
-              <Buttons
-                handleEnd={handleEnd}
-                handleStart={handleStart}
-                running={running}
-                start={start}
-                end={end}
-              />
-
-              <EventList
-                user={user}
-                running={running}
-                setRunning={setRunning}
-                runningEvent={runningEvent}
-                elapsedTime={elapsedTime}
-                setElapsedTime={setElapsedTime}
-              />
+              <div>
+                <div>
+                  <button onClick={handleStart}>Start</button>
+                  <button onClick={handleEnd}>End</button>
+                </div>
+                <div>
+                  {runningEvent && runningEvent.eventStart && (
+                    <div>
+                      <p>Event started at: {runningEvent.eventStart}</p>
+                      {runningEvent.eventEnd ? (
+                        <p>Event ended at: {runningEvent.eventEnd}</p>
+                      ) : (
+                        <p>Event is currently running</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div>
+                {elapsedTime !== 0 && (
+                  <p>Total elapsed time: {elapsedTime} seconds</p>
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -210,273 +170,61 @@ export const Cico = (props) => {
   );
 };
 
-const Buttons = (props) => {
-  const { running, handleStart, handleEnd, start, end } = props;
-  const [buttonState, setButtonState] = useState(false);
-  const clickOnClockIn = () => {
-    handleStart();
-  };
+class EventsRepository {
+  constructor(db) {
+    this.db = db;
+  }
 
-  const clickOnClockOut = () => {
-    handleEnd();
-  };
-
-  useEffect(() => {
-    if (running) {
-      setButtonState(true);
-    } else {
-      setButtonState(false);
-    }
-  }, [running]);
-
-  return (
-    <Panel className="p-m-0">
-      <div className="p-d-flex p-jc-center p-ai-center flex-wrap-sm">
-        <Button
-          className="p-mr-0"
-          label={buttonState ? "timer" : "In"}
-          disabled={buttonState}
-          onClick={clickOnClockIn}
-          cursor={buttonState ? "pointer" : "default"}
-          style={{
-            backgroundColor: "green",
-            color: buttonState ? "black" : "white",
-            fontSize: "20px",
-            height: "200px",
-            width: "50%",
-            padding: "10px 60px",
-            borderRadius: "15px 0px 0px 15px",
-            border: "0px",
-            margin: "0px",
-            textAlign: "center",
-            opacity: !buttonState ? 1 : 0.2,
-          }}
-        />
-        <Button
-          className="p-ml-0"
-          label="End"
-          disabled={!buttonState}
-          onClick={clickOnClockOut}
-          cursor={!buttonState ? "pointer" : "default"}
-          style={{
-            backgroundColor: "red",
-            color: !buttonState ? "black" : "white",
-            fontSize: "20px",
-            height: "200px",
-            width: "50%",
-            padding: "10px 60px",
-            borderRadius: "0px 15px 15px 0px",
-            border: "0px",
-            margin: "0px",
-            textAlign: "center",
-            opacity: buttonState ? 1 : 0.2,
-          }}
-        />
-      </div>
-
-      {/* <div className="p-d-flex p-jc-center p-ai-center p-buttonset flex-wrap style={{ whiteSpace: 'nowrap' }}">
-        <div className="p-ml-1">
-          <button
-            style={{
-              backgroundColor: "green",
-              color: running ? "black" : "white",
-              fontSize: "20px",
-              height: "150px",
-              width: "120px",
-              padding: "10px 60px",
-              borderRadius: "15px 0px 0px 15px",
-              border: "0px",
-              margin: "10px 0px",
-              cursor: running ? "pointer" : "default",
-              opacity: running ? 0.2 : 1,
-            }}
-            disabled={running}
-            onClick={clickOnClockIn}
-          >
-            {running ? "timer" : "In"}
-          </button>
-        </div>
-        <div className="p-mr-1">
-          <button
-            style={{
-              backgroundColor: "red",
-              color: !running ? "black" : "white",
-              fontSize: "20px",
-              height: "150px",
-              width: "120px",
-              padding: "10px 60px",
-              borderRadius: "0px 15px 15px 0px",
-              border: "0px",
-              margin: "10px 0px",
-              cursor: !running ? "pointer" : "default",
-              opacity: !running ? 0.2 : 1,
-            }}
-            disabled={!running}
-            onClick={clickOnClockOut}
-          >
-            End
-          </button>
-        </div>
-      </div> */}
-    </Panel>
-  );
-};
-
-const EventList = (props) => {
-  const {
-    user,
-    running,
-    setRunning,
-    runningEvent,
-    elapsedTime,
-    setElapsedTime,
-  } = props;
-  const [events, setEvents] = useState([]);
-  const [trigger, setTrigger] = useState(false);
-  const userId = user.uid;
-
-  const eventsRef = collection(db, "events");
-
-  const getEventsForThisUser = async () => {
-    try {
-      const q = query(eventsRef, where("userId", "==", userId));
-      const querySnapshot = await getDocs(q);
-      const eventsForThisUser = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      console.log(eventsForThisUser);
-
-      return eventsForThisUser;
-    } catch (error) {
-      console.log("event not found", error);
-    }
-  };
-
-  useEffect(() => {
-    const fetchEvents = async () => {
-      const eventsForThisUser = await getEventsForThisUser();
-      console.log(eventsForThisUser);
-      setEvents(eventsForThisUser);
-
-      // Do something with the eventsForThisUser data, such as updating state
+  createEvent(userId) {
+    const eventRef = collection(this.db, "events");
+    const newEvent = {
+      userId: userId,
+      eventStart: serverTimestamp(),
     };
-    fetchEvents();
-  }, [running, trigger]);
+    return setDoc(doc(eventRef), newEvent);
+  }
 
-  const deleteLog = (e) => {
-    // console.log("Clicked delete for:", e);
+  updateEventEnd(eventId) {
+    const eventRef = doc(this.db, "events", eventId);
+    const updateData = {
+      eventEnd: serverTimestamp(),
+    };
+    return updateDoc(eventRef, updateData);
+  }
 
-    const docRef = doc(eventsRef, e);
+  updateEventTotalTime(eventId, totalTime) {
+    const eventRef = doc(this.db, "events", eventId);
+    const updateData = {
+      totalTime: totalTime,
+    };
+    return updateDoc(eventRef, updateData);
+  }
 
-    deleteDoc(docRef)
-      .then(() => {
-        setTrigger(!trigger);
-        console.log("Entire Document has been deleted successfully.");
-      })
-      .catch((error) => {
-        console.log(error);
-      });
-  };
-
-  const startTimeBodyTemplate = (rowData) => {
-    const d = date(rowData.eventStart);
-    const t = time(rowData.eventStart);
-    return `${d} ${t}`;
-  };
-  const endTimeBodyTemplate = (rowData) => {
-    // console.log(rowData);
-
-    if (rowData.eventEnd === "running") {
-      setRunning(true);
-      return "Running";
-    } else {
-      const t = time(rowData.eventEnd);
-
-      return `${t}`;
-    }
-  };
-
-  const totalTimeBodyTemplate = (rowData) => {
-    if (rowData.totalTime !== null) {
-      const t = difference(rowData.eventStart, rowData.eventEnd);
-
-      return `${t}`;
-    } else {
-      return (
-        <Timer
-          unixTimestamp={rowData.eventStart.seconds}
-          elapsedTime={elapsedTime}
-          setElapsedTime={setElapsedTime}
-        />
-      );
-    }
-  };
-
-  const deleteBodyTemplate = (rowData) => {
-    return (
-      <div
-        onClick={() => {
-          deleteLog(rowData.id);
-        }}
-      >
-        <i className="pi pi-delete-left" style={{ color: "red" }}></i>
-      </div>
+  getRunningEvent(userId) {
+    const eventsRef = collection(this.db, "events");
+    const queryRef = query(
+      eventsRef,
+      where("userId", "==", userId),
+      where("eventEnd", "==", null)
     );
-  };
+    return getDocs(queryRef).then((querySnapshot) => {
+      if (!querySnapshot.empty) {
+        const docSnapshot = querySnapshot.docs[0];
+        return { id: docSnapshot.id, ...docSnapshot.data() };
+      }
+      return null;
+    });
+  }
 
-  return (
-    <Card title="Working Hours">
-      <DataTable
-        value={events}
-        dataKey="id"
-        size="small"
-        emptyMessage="No events yet"
-      >
-        <Column
-          field="eventStart.seconds"
-          header="Start"
-          body={startTimeBodyTemplate}
-          style={{ width: "10rem" }}
-        />
-        <Column
-          field="eventEnd.seconds"
-          header="End"
-          body={endTimeBodyTemplate}
-        />
-        <Column
-          field="eventEnd.totalTime"
-          header="Total"
-          body={totalTimeBodyTemplate}
-          style={{ width: "5rem" }}
-        />
-        <Column body={deleteBodyTemplate}></Column>
-      </DataTable>
-    </Card>
-  );
-};
+  getEventById(eventId) {
+    const eventRef = doc(this.db, "events", eventId);
+    return getDoc(eventRef).then((docSnapshot) => {
+      if (docSnapshot.exists()) {
+        return docSnapshot.data();
+      }
+      return null;
+    });
+  }
+}
 
-const Timer = ({ unixTimestamp, elapsedTime, setElapsedTime }) => {
-  console.log(unixTimestamp);
-
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      const currentTime = Math.floor(Date.now() / 1000);
-      setElapsedTime(currentTime - unixTimestamp);
-    }, 1000);
-
-    return () => clearInterval(intervalId);
-  }, [unixTimestamp]);
-
-  const formatTime = (time) => {
-    const hours = Math.floor(time / 3600);
-    const minutes = Math.floor((time % 3600) / 60);
-    const seconds = time % 60;
-    return `${hours}:${minutes < 10 ? "0" : ""}${minutes}:${
-      seconds < 10 ? "0" : ""
-    }${seconds}`;
-  };
-
-  return <div>{formatTime(elapsedTime)}</div>;
-};
-
+export default Cico;

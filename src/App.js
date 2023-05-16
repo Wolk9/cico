@@ -11,7 +11,7 @@ import { auth } from "./config/firebase";
 import { Admin } from "./pages/admin";
 import { Cico } from "./pages/cico";
 import { User } from "./pages/user";
-import { checkUserRole } from "./components/helpers";
+import { UserUtils } from "./components/helpers";
 
 const AuthenticatedRoute = ({
   isAuthenticated,
@@ -51,7 +51,7 @@ const App = () => {
       if (currentUser) {
         setUser(currentUser);
         setPopUpVisible(false);
-        checkUserRole(currentUser.uid);
+        UserUtils.checkUserRole(currentUser.uid);
       } else {
         setUser({});
         setPopUpVisible(true);
@@ -59,6 +59,8 @@ const App = () => {
     });
     return unsubscribe;
   }, []);
+
+  console.log(user);
 
   return (
     <Router>

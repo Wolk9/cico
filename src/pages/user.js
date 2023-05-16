@@ -1,15 +1,8 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 // Firebase imports
 import { db } from "../config/firebase";
-import {
-  doc,
-  getDoc,
-  collection,
-  query,
-  where,
-  getDocs,
-} from "firebase/firestore";
+import { collection, getDocs } from "firebase/firestore";
 
 // PrimeReact imports
 import { Card } from "primereact/card";
@@ -19,7 +12,7 @@ import { InputNumber } from "primereact/inputnumber";
 import { Calendar } from "primereact/calendar";
 
 // helper imports
-import { date } from "../components/helpers";
+import { DateFormatter } from "../components/helpers";
 
 export const User = (props) => {
   const { user } = props;
@@ -98,7 +91,7 @@ export const User = (props) => {
 
   console.log(contractValue);
 
-  const contractDate = date(contractValue);
+  const contractDate = DateFormatter.date(contractValue);
 
   console.log(contractDate);
 

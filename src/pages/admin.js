@@ -1,24 +1,17 @@
 // React imports
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 // Firebase imports
-import { auth, db } from "../config/firebase";
-import {
-  collection,
-  getDocs,
-  getDoc,
-  deleteDoc,
-  doc,
-} from "firebase/firestore";
+import { db } from "../config/firebase";
+import { collection, getDocs, deleteDoc, doc } from "firebase/firestore";
 
 // UI imports
 import { Card } from "primereact/card";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
-import { Button } from "primereact/button";
 
 // logic import
-import { date } from "../components/helpers";
+import { DateFormatter } from "../components/helpers";
 
 // sub Components
 
@@ -67,7 +60,7 @@ export const Admin = () => {
   };
 
   const contractDateBodyTemplate = (rowData) => {
-    const contractDate = date(rowData.contractDate);
+    const contractDate = DateFormatter.date(rowData.contractDate);
     console.log(contractDate);
     return contractDate;
   };
