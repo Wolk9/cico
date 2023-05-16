@@ -1,11 +1,9 @@
-import React, { useEffect, useState } from "react";
 import { Menubar } from "primereact/menubar";
 import { Button } from "primereact/button";
 import { signOutUser } from "../components/helpers";
 
 const Navigation = (props) => {
   const { isAuthenticated } = props;
-  const [visible, setVisible] = useState(false);
 
   const items = [
     {
@@ -25,20 +23,20 @@ const Navigation = (props) => {
     },
   ];
 
-  const end = (
-    <div>
-      {!isAuthenticated && (
-        <Button size="small" onClick={signOutUser}>
-          Sign Out
-        </Button>
-      )}
-    </div>
-  );
+  const end = <div>{isAuthenticated && <AuthenticatedButtons />}</div>;
 
   return (
     <div>
       <Menubar model={items} end={end} className={"p-menubar-mobile-display"} />
     </div>
+  );
+};
+
+const AuthenticatedButtons = () => {
+  return (
+    <Button size="small" onClick={signOutUser}>
+      Sign Out
+    </Button>
   );
 };
 
