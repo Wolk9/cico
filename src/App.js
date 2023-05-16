@@ -1,16 +1,13 @@
-import { current } from "@reduxjs/toolkit";
 import { onAuthStateChanged } from "firebase/auth";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   BrowserRouter as Router,
   Routes,
   Route,
-  Link,
   Navigate,
 } from "react-router-dom";
 import Navigation from "./components/Navigation";
-import { auth, db } from "./config/firebase";
-import { collection, doc, getDoc } from "firebase/firestore";
+import { auth } from "./config/firebase";
 import { Admin } from "./pages/admin";
 import { Cico } from "./pages/cico";
 import { User } from "./pages/user";
@@ -26,11 +23,7 @@ const AuthenticatedRoute = ({
 }) => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      if (currentUser) {
-        setIsAuthenticated(true);
-      } else {
-        setIsAuthenticated(false);
-      }
+      setIsAuthenticated(!!currentUser);
     });
 
     return unsubscribe;
@@ -42,7 +35,6 @@ const AuthenticatedRoute = ({
 
   return (
     <Route
-      isAuthenticated={isAuthenticated}
       {...rest}
       element={isAuthenticated ? children : <Navigate to="/" />}
     />
@@ -57,7 +49,6 @@ const App = () => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
-        console.log(currentUser);
         setUser(currentUser);
         setPopUpVisible(false);
         checkUserRole(currentUser.uid);
@@ -68,8 +59,6 @@ const App = () => {
     });
     return unsubscribe;
   }, []);
-
-  console.log(user.uid);
 
   return (
     <Router>
@@ -96,7 +85,6 @@ const App = () => {
             }
           />
         </Routes>
-        {/* {!user && <Navigate to="/" />} */}
       </div>
     </Router>
   );
