@@ -5,89 +5,88 @@ import { signOut } from "firebase/auth";
 import { collection, doc, setDoc, getDoc } from "firebase/firestore";
 import { auth } from "../config/firebase";
 
-export const date = (unixTime) => {
-  //console.log(unixTime);
-  const { seconds, nanoseconds } = unixTime;
-  //console.log(unixTime, seconds, nanoseconds);
-  const Date = moment.unix(seconds).add(nanoseconds / 1000000, "milliseconds");
-  const formatedDate = Date.format("ddd DD-MM");
+class DateFormatter {
+  static formatDate(unixTime) {
+    const { seconds, nanoseconds } = unixTime;
+    const Date = moment
+      .unix(seconds)
+      .add(nanoseconds / 1000000, "milliseconds");
+    return Date.format("ddd DD-MM");
+  }
 
-  //console.log(formatedDate);
-  return formatedDate;
-};
+  static formatTime(unixTime) {
+    const { seconds, nanoseconds } = unixTime;
+    const Date = moment
+      .unix(seconds)
+      .add(nanoseconds / 1000000, "milliseconds");
+    return Date.format("HH:mm");
+  }
+}
 
-export const time = (unixTime) => {
-  //console.log(unixTime);
-  const { seconds, nanoseconds } = unixTime;
-  //console.log(unixTime, seconds, nanoseconds);
-  const Date = moment.unix(seconds).add(nanoseconds / 1000000, "milliseconds");
-  const formatedTime = Date.format("HH:mm");
+class TimeDifferenceCalculator {
+  static calculateDifference(startUnixTime, endUnixTime) {
+    const startSeconds = startUnixTime.seconds;
+    const startMilliseconds = startUnixTime.nanoseconds / 1000000;
+    const endSeconds = endUnixTime.seconds;
+    const endMilliseconds = endUnixTime.nanoseconds / 1000000;
 
-  //console.log(formatedTime);
-  return formatedTime;
-};
+    const diffInMilliseconds =
+      endSeconds * 1000 +
+      endMilliseconds -
+      (startSeconds * 1000 + startMilliseconds);
+    const diffInMinutes = diffInMilliseconds / 60000;
+    return moment.utc(diffInMinutes * 60000).format("HH:mm");
+  }
+}
 
-export const difference = (startUnixTime, endUnixTime) => {
-  const startSeconds = startUnixTime.seconds;
-  const startMilliseconds = startUnixTime.nanoseconds / 1000000;
-  const endSeconds = endUnixTime.seconds;
-  const endMilliseconds = endUnixTime.nanoseconds / 1000000;
+class UserUtils {
+  static setRole(uid2makeAdmin, role) {
+    console.log("makeAdmin");
 
-  const diffInMilliseconds =
-    endSeconds * 1000 +
-    endMilliseconds -
-    (startSeconds * 1000 + startMilliseconds);
-  const diffInMinutes = diffInMilliseconds / 60000;
+    const usersRef = collection(db, "users");
 
-  const formattedTime = moment.utc(diffInMinutes * 60000).format("HH:mm");
-  return formattedTime;
-};
+    setDoc(doc(usersRef, uid2makeAdmin), { role })
+      .then(() => {
+        console.log("User role added to Firestore successfully");
+      })
+      .catch((error) => {
+        console.error("Error adding user role to Firestore:", error);
+      });
+  }
 
-export const setRole = (uid2makeAdmin, role) => {
-  console.log("makeAdmin");
+  static async checkUserRole(uid) {
+    const usersRef = collection(db, "users");
 
-  const usersRef = collection(db, "users");
-
-  setDoc(doc(usersRef, uid2makeAdmin), { role })
-    .then(() => {
-      console.log("User role added to Firestore successfully");
-    })
-    .catch((error) => {
-      console.error("Error adding user role to Firestore:", error);
-    });
-};
-
-export const checkUserRole = async (uid) => {
-  const usersRef = collection(db, "users");
-
-  const userDoc = await getDoc(doc(usersRef, uid));
-  if (userDoc.exists()) {
-    const userData = userDoc.data();
-    if (userData.role === "admin") {
-      console.log("User has admin role");
+    const userDoc = await getDoc(doc(usersRef, uid));
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+      if (userData.role === "admin") {
+        console.log("User has admin role");
+      } else {
+        console.log("User does not have admin role");
+      }
+      return userData;
     } else {
-      console.log("User does not have admin role");
+      console.log("User not found");
     }
+  }
+
+  static async getUserData(uid) {
+    const usersRef = collection(db, "users");
+
+    const userDoc = await getDoc(doc(usersRef, uid));
+    const userData = userDoc.data();
     return userData;
-  } else {
-    console.log("User not found");
   }
-};
 
-export const getUserData = async (uid) => {
-  const usersRef = collection(db, "users");
-
-  const userDoc = await getDoc(doc(usersRef, uid));
-  const userData = userDoc.data();
-  //console.log(userData);
-  return userData;
-};
-
-export const signOutUser = async () => {
-  console.log("signOutUser");
-  try {
-    await signOut(auth);
-  } catch (err) {
-    console.error(err);
+  static async signOutUser() {
+    console.log("signOutUser");
+    try {
+      await signOut(auth);
+    } catch (err) {
+      console.error(err);
+    }
   }
-};
+}
+
+export { DateFormatter, TimeDifferenceCalculator, UserUtils };
